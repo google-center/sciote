@@ -1,0 +1,2 @@
+vk_api==11.4.0
+tensorflow==1.12.0
