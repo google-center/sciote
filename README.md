@@ -1,6 +1,6 @@
 <div align="center">
 
-# sciote
+# ![sciote](docs/sciote-logo-transparent.png)
 
 An AI that can tell your identity based on your text messages
 
@@ -21,9 +21,6 @@ For a detailed guide head over to the [wiki](https://github.com/gugl-center/scio
 
 ## Support us!
 
-<div align="center">
-<a href="https://www.buymeacoffee.com/NickKaramoff" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
-<br>
-<i>Please specify in the donation message that you are donating for sciote</i>
-</div>
+*Please specify in the donation message that you are donating for sciote*
 
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/NickKaramoff)
