@@ -1,46 +1,44 @@
-import codecs
-
-
-def remove_blank_lines(lineList):
+def remove_blank_lines(line_list):
     element = 0
-    while element < len(lineList) and lineList[element].startswith("\n"):
-        lineList.pop(element)
-    element = len(lineList) - 1
-    while element == len(lineList) - 1 and lineList[element].startswith("\n"):
-        lineList.pop(element)
+    while element < len(line_list) and line_list[element].startswith("\n"):
+        line_list.pop(element)
+    element = len(line_list) - 1
+    while element == len(line_list) - 1 and line_list[element].startswith("\n"):
+        line_list.pop(element)
 
 
-handle = codecs.open('vtorograund.txt', encoding='utf-8')
+file = open('chat.txt', encoding='utf-8')
 
-messageLine = handle.readlines()
-remove_blank_lines(messageLine)
+message_line = file.readlines()
+remove_blank_lines(message_line)
 
-lineCount = len(messageLine)
-nameList = []
-messageList = []
+line_count = len(message_line)
+name_list = []
+message_list = []
 
 i = 0
-while i < lineCount:
-    mes = messageLine[i+1]
+while i < line_count:
+    mes = message_line[i + 1]
 
-    if i + 1 < lineCount and messageLine[i + 1].startswith("\n"):
+    if i + 1 < line_count and message_line[i + 1].startswith("\n"):
         i += 2
     else:
-        line = messageLine[i]
+        line = message_line[i]
         name = line[:line.find('(') - 1]
-        nameList.append(name)
+        name_list.append(name)
         i += 1
 
         message = ""
-        while i < lineCount and not messageLine[i].startswith("\n") and not messageLine[i].startswith("Прикрепления"):
-            message += messageLine[i][:messageLine[i].find("\n")]
+        while i < line_count and not message_line[i].startswith("\n") and not \
+        message_line[i].startswith("Прикрепления"):
+            message += message_line[i][:message_line[i].find("\n")]
             i += 1
-        messageList.append(message)
+        message_list.append(message)
 
-        if i < lineCount and (messageLine[i].startswith("Прикрепления")):
+        if i < line_count and (message_line[i].startswith("Прикрепления")):
             i += 1
-            while i < lineCount and not messageLine[i].startswith("\n"):
+            while i < line_count and not message_line[i].startswith("\n"):
                 i += 1
         i += 1
 
-handle.close()
+file.close()
