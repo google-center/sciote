@@ -19,30 +19,41 @@ def parse_file(filename):
         r"^([A-Za-zА-Яа-яЁё]+ [A-Za-zА-Яа-яЁё]+) \(\d+ [а-я]+.? \d{4} г. \d{1,2}:\d{2}:\d{2}\):$")
 
     i = 0
-
     while i < line_count:
+        # проверяем, является ли строка лейблом
         match = re.match(lbl_pat, lines[i])
+
         # если это лейбл
         if match:
+            # вытаскиваем имя
             name = match.group(1)
             msg = ''
             i += 1
             skip = False
+
+            # для каждой строки, которая не является лейблом
             while not re.match(lbl_pat, lines[i]):
+                # если начались прикрепления, то сообщение закончилось
                 if not skip and lines[i].strip().endswith('Прикрепления:'):
                     skip = True
                 if not skip:
                     msg += lines[i]
 
                 i += 1
+
+                # последнее сообщение отправляет цикл
+                # за рамки списка -> исправляем
                 if i == line_count:
                     break
 
             if msg.strip() != '':
                 name_list.append(name)
+                # обрезаем сообщение, чтобы не хранить символы новой строки
                 message_list.append(msg.strip())
         else:
             i += 1
 
     file.close()
+
+    # функция возвращает по отдельности сообщения и лейблы
     return message_list, name_list
