@@ -1,44 +1,48 @@
-def remove_blank_lines(line_list):
-    element = 0
-    while element < len(line_list) and line_list[element].startswith("\n"):
-        line_list.pop(element)
-    element = len(line_list) - 1
-    while element == len(line_list) - 1 and line_list[element].startswith("\n"):
-        line_list.pop(element)
+import re
+import sys
 
 
-file = open('chat.txt', encoding='utf-8')
+def parse_file(filename):
+    try:
+        file = open(filename, encoding='utf-8')
+    except FileNotFoundError:
+        print(f"File {filename} not found.")
+        sys.exit(1)
 
-message_line = file.readlines()
-remove_blank_lines(message_line)
+    lines = file.readlines()
+    line_count = len(lines)
+    name_list = []
+    message_list = []
 
-line_count = len(message_line)
-name_list = []
-message_list = []
+    # Имя Фамилия (01 янв. 1970 г. 0:00:00):
+    lbl_pat = re.compile(
+        r"^([A-Za-zА-Яа-яЁё]+ [A-Za-zА-Яа-яЁё]+) \(\d+ [а-я]+.? \d{4} г. \d{1,2}:\d{2}:\d{2}\):$")
 
-i = 0
-while i < line_count:
-    mes = message_line[i + 1]
+    i = 0
 
-    if i + 1 < line_count and message_line[i + 1].startswith("\n"):
-        i += 2
-    else:
-        line = message_line[i]
-        name = line[:line.find('(') - 1]
-        name_list.append(name)
-        i += 1
-
-        message = ""
-        while i < line_count and not message_line[i].startswith("\n") and not \
-        message_line[i].startswith("Прикрепления"):
-            message += message_line[i][:message_line[i].find("\n")]
+    while i < line_count:
+        match = re.match(lbl_pat, lines[i])
+        # если это лейбл
+        if match:
+            name = match.group(1)
+            msg = ''
             i += 1
-        message_list.append(message)
+            skip = False
+            while not re.match(lbl_pat, lines[i]):
+                if not skip and lines[i].strip().endswith('Прикрепления:'):
+                    skip = True
+                if not skip:
+                    msg += lines[i]
 
-        if i < line_count and (message_line[i].startswith("Прикрепления")):
-            i += 1
-            while i < line_count and not message_line[i].startswith("\n"):
                 i += 1
-        i += 1
+                if i == line_count:
+                    break
 
-file.close()
+            if msg.strip() != '':
+                name_list.append(name)
+                message_list.append(msg.strip())
+        else:
+            i += 1
+
+    file.close()
+    return message_list, name_list
