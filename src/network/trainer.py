@@ -1,9 +1,17 @@
 import sys
 
+from network.config import CLIENTS
 from network.models import mlp, sepcnn
 
 
-def train(messages, labels, quotient):
+def tokenize_labels(trn_lbls, tst_lbls):
+    y_trn = [CLIENTS.index(y) for y in trn_lbls]
+    y_tst = [CLIENTS.index(y) for y in tst_lbls]
+
+    return y_trn, y_tst
+
+
+def _train(messages, labels, quotient):
     if len(messages) != len(labels):
         print('Messages and labels have different lengths')
         sys.exit(1)
@@ -22,6 +30,8 @@ def train(messages, labels, quotient):
         avg += len(msg.split())
     avg /= len(messages)
     avg = len(messages) / avg
+
+    train_labels, test_labels = tokenize_labels(train_labels, test_labels)
 
     if avg < 1500:
         print(f"Using the MLP model (S/W = {avg})")

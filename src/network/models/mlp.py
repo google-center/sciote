@@ -18,13 +18,44 @@ from network.config import NGRAM_RANGE, TOKEN, MIN_FREQ, DICT_SIZE, CLIENTS, \
 from network.models import _last_layer_params, sepcnn
 
 
+selector = None
+
+
+def tokenize_and_train(trn_data, trn_lbls, tst_data):
+    vctrzr = TfidfVectorizer(
+        ngram_range=NGRAM_RANGE,
+        dtype='int32',
+        strip_accents='unicode',
+        decode_error='replace',
+        analyzer=TOKEN,
+        min_df=MIN_FREQ
+    )
+
+    x_trn = vctrzr.fit_transform(trn_data)
+
+    x_tst = vctrzr.transform(tst_data)
+
+    global selector
+    selector = SelectKBest(f_classif, k=min(DICT_SIZE, x_trn.shape[1]))
+    selector.fit(x_trn, trn_lbls)
+    x_trn = selector.transform(x_trn).astype('float32')
+    x_tst = selector.transform(x_tst).astype('float32')
+
+    return x_trn, x_tst
+
+
+def tokenize(data):
+    return selector.transform(data).astype('float32')
+
+
+
 def main(trn_data, trn_lbls, tst_data, tst_lbls):
     print('Vectorizing data...')
     # trn_data, tst_data, trn_lbls, tst_lbls = tokenize(trn_data, trn_lbls,
     #                                                   tst_data, tst_lbls)
 
-    trn_data, tst_data, _, trn_lbls, tst_lbls = \
-        sepcnn.tokenize(trn_data, tst_data, trn_lbls, tst_lbls)
+    trn_data, tst_data = \
+        tokenize_and_train(trn_data, trn_lbls, tst_data)
     print('Data vectorized')
     print()
 
@@ -57,33 +88,8 @@ def main(trn_data, trn_lbls, tst_data, tst_lbls):
     print()
 
     print('Saving model...')
-    model.save(model_name)
+    model.save(model_name + '.h5')
     print(f'Model saved as {model_name}')
-
-
-def tokenize(trn_data, trn_lbls, tst_data, tst_lbls):
-    vctrzr = TfidfVectorizer(
-        ngram_range=NGRAM_RANGE,
-        dtype='int32',
-        strip_accents='unicode',
-        decode_error='replace',
-        analyzer=TOKEN,
-        min_df=MIN_FREQ
-    )
-
-    x_trn = vctrzr.fit_transform(trn_data)
-
-    x_tst = vctrzr.transform(tst_data)
-
-    selector = SelectKBest(f_classif, k=min(DICT_SIZE, x_trn.shape[1]))
-    selector.fit(x_trn, trn_lbls)
-    x_trn = selector.transform(x_trn).astype('float32')
-    x_tst = selector.transform(x_tst).astype('float32')
-
-    y_trn = [CLIENTS.index(y) for y in trn_lbls]
-    y_tst = [CLIENTS.index(y) for y in tst_lbls]
-
-    return x_trn, x_tst, y_trn, y_tst
 
 
 LAYERS = {

@@ -278,3 +278,4 @@ $RECYCLE.BIN/
 # End of https://www.gitignore.io/api/windows,macos,linux,python,pycharm+all
 
 *.h5
+*.pickle

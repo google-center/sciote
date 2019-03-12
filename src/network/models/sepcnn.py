@@ -4,6 +4,8 @@ This module contains module for a sepCNN model of the NN.
 For this model the text is tokenized as sequences and is classified using a
 separable convolutional neural network.
 """
+import json
+import pickle
 from datetime import datetime
 
 from tensorflow.python.keras import models
@@ -21,13 +23,12 @@ from network.models import _last_layer_params
 
 def main(trn_data, trn_lbls, tst_data, tst_lbls):
     print('Tokenizing data...')
-    trn_data, tst_data, index, trn_lbls, tst_lbls = \
-        tokenize(trn_data, tst_data, trn_lbls, tst_lbls)
+    trn_data, tst_data, tknzr = tokenize(trn_data, tst_data)
     print('Data tokenized')
     print()
 
     print('Building model...')
-    model = build_model(len(index), trn_data.shape[1:])
+    model = build_model(len(tknzr.word_index), trn_data.shape[1:])
     print('Model built')
     print()
 
@@ -59,12 +60,15 @@ def main(trn_data, trn_lbls, tst_data, tst_lbls):
     print()
 
     print('Saving model...')
-    model_name = str(int(datetime.now().timestamp())) + '.h5'
-    model.save(model_name)
+    model_name = str(int(datetime.now().timestamp()))
+    model.save(model_name+'.h5')
+
+    with open(model_name+'.pickle', 'wb') as handle:
+        pickle.dump(tknzr, handle, protocol=pickle.HIGHEST_PROTOCOL)
     print(f'Model saved as {model_name}')
 
 
-def tokenize(trn_data, tst_data, trn_lbls, tst_lbls):
+def tokenize(trn_data, tst_data):
     x_tknzr = Tokenizer(SC_DICT_SIZE)
     x_tknzr.fit_on_texts(trn_data)
 
@@ -80,10 +84,7 @@ def tokenize(trn_data, tst_data, trn_lbls, tst_lbls):
     x_trn = pad_sequences(x_trn, maxlen=max_len)
     x_tst = pad_sequences(x_tst, maxlen=max_len)
 
-    y_trn = [CLIENTS.index(y) for y in trn_lbls]
-    y_tst = [CLIENTS.index(y) for y in tst_lbls]
-
-    return x_trn, x_tst, x_tknzr.word_index, y_trn, y_tst
+    return x_trn, x_tst, x_tknzr
 
 
 def build_model(num_words, in_shape):
