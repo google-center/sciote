@@ -1,6 +1,23 @@
 import re
 
 
+def get_metrics(message):
+    return (
+        len(message),
+        spacing_around_punctuation(message),
+        avg_ellipsis_length(message),
+        *number_of_dashes(message),
+        all_caps_avg_length(message),
+        *smiley_parenthesis_avg_lengths(message),
+        period_stats(message),
+        capitalized_amount(message),
+        exclamation_amount(message),
+        semicolon_amount(message),
+        elongated_words(message),
+        1 if uses_yo(message) else 0,
+    )
+
+
 def split_into_sentences(message):
     delimiters = "?", "!", ".", "\n"
     regex_pattern = "|".join(map(re.escape, delimiters))
