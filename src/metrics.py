@@ -1,20 +1,23 @@
 import re
 
+import numpy as np
+
 
 def get_metrics(message):
-    return (
-        len(message),
-        spacing_around_punctuation(message),
-        avg_ellipsis_length(message),
-        *number_of_dashes(message),
-        all_caps_avg_length(message),
-        *smiley_parenthesis_avg_lengths(message),
-        period_stats(message),
-        capitalized_amount(message),
-        exclamation_amount(message),
-        semicolon_amount(message),
-        elongated_words(message),
-        1 if uses_yo(message) else 0,
+    return np.array(
+        [len(message),
+         spacing_around_punctuation(message),
+         avg_ellipsis_length(message),
+         *number_of_dashes(message),
+         all_caps_avg_length(message),
+         *smiley_parenthesis_avg_lengths(message),
+         period_stats(message),
+         capitalized_amount(message),
+         exclamation_amount(message),
+         semicolon_amount(message),
+         elongated_words(message),
+         1 if uses_yo(message) else 0],
+        np.float32
     )
 
 
@@ -22,7 +25,7 @@ def split_into_sentences(message):
     delimiters = "?", "!", ".", "\n"
     regex_pattern = "|".join(map(re.escape, delimiters))
     arr = re.split(regex_pattern, message)
-    return list(filter(lambda a: a != '', arr))
+    return list(filter(lambda a: a.strip() != '', arr))
 
 
 # Spacing before and/or after punctuation
@@ -129,7 +132,6 @@ def smiley_parenthesis_avg_lengths(message):
     len_happy_brackets = 0
     len_sad_brackets = 0
 
-    i = 0
     size = len(message)
     happy_duration = 0
     sad_duration = 0
@@ -150,7 +152,7 @@ def smiley_parenthesis_avg_lengths(message):
             sad_duration = 0
 
     if count_happy_brackets_seq > 0:
-        result[0] = len_happy_brackets / count_sad_brackets_seq
+        result[0] = len_happy_brackets / count_happy_brackets_seq
     if count_sad_brackets_seq > 0:
         result[1] = len_sad_brackets / count_sad_brackets_seq
     return result
@@ -164,7 +166,7 @@ def ends_with_period(sentence):
 def period_stats(message):
     sentences = split_into_sentences(message)
     periods = message.count('.')
-    return periods/len(sentences)
+    return periods / len(sentences) if len(sentences) > 0 else 0
 
 
 # Делим сообщения на предложения, считаем, сколько раз
@@ -175,7 +177,7 @@ def capitalized_amount(message):
     for element in arr:
         if element[0].isupper():
             count += 1
-    return count / len(arr)
+    return count / len(arr) if len(arr) > 0 else 0
 
 
 # Если строка содержит ё, возвращаем true,  иначе -  false
@@ -191,9 +193,9 @@ def exclamation_amount(message):
     sentences = split_into_sentences(message)
 
     if message[-1] == '!':
-        return amt / len(sentences)
+        return amt / len(sentences) if len(sentences) > 0 else 0
     else:
-        return (amt - 1) / len(sentences)
+        return (amt - 1) / len(sentences) if len(sentences) > 0 else 0
 
 
 # возвращаем количество ; в сообщении
@@ -206,7 +208,6 @@ def semicolon_amount(message):
 def elongated_words(message):
     arr = message.split()
     arr = list(filter(lambda a: a != '', arr))
-    print(arr)
     count = 0
     for element in arr:
         c = 1
