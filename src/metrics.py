@@ -141,10 +141,13 @@ def smiley_parenthesis_avg_lengths(message):
 
 # Если строка оканчивается точкой, возвращаем true,  иначе -  false
 def ends_with_period(sentence):
-    if sentence[len(sentence) - 1] == '.':
-        return True
-    else:
-        return False
+    return sentence.endswith('.')
+
+
+def period_stats(message):
+    sentences = split_into_sentences(message)
+    periods = message.count('.')
+    return periods/len(sentences)
 
 
 # Делим сообщения на предложения, считаем, сколько раз
@@ -173,7 +176,7 @@ def exclamation_amount(message):
     if message[-1] == '!':
         return amt / len(sentences)
     else:
-        return amt / len(sentences)
+        return (amt - 1) / len(sentences)
 
 
 # возвращаем количество ; в сообщении
