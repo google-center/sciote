@@ -92,7 +92,8 @@ def train(chat_file, amount, quotient):
         Dropout: 'do',
         Dense: 'dn'
     }
-    file_id = '-'.join([amount, quotient] +
+    file_id = '-'.join(["%.3f" % fit.history['val_acc'][-1]] +
+                       [str(amount), str(quotient)] +
                        [f'{layers[type(l)]}'
                         f'{l.units if isinstance(l, Dense) else l.rate}'
                         for l in model.layers])
