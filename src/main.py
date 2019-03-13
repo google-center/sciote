@@ -92,10 +92,10 @@ def train(chat_file, amount, quotient):
         Dropout: 'do',
         Dense: 'dn'
     }
-    file_id = '-'.join(
-        [f'{layers[type(l)]}{l.units if isinstance(l, Dense) else l.rate}'
-         for l in model.layers]
-    )
+    file_id = '-'.join([amount, quotient] +
+                       [f'{layers[type(l)]}'
+                        f'{l.units if isinstance(l, Dense) else l.rate}'
+                        for l in model.layers])
     name = f'configs/{file_id}.pickle'
     with open(name, 'xb') as file:
         pickle.dump(actives, file, protocol=4)
