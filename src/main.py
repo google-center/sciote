@@ -6,6 +6,7 @@ import click
 import numpy as np
 from tensorflow import logging
 from tensorflow.python.keras.callbacks import EarlyStopping
+from tensorflow.python.keras.layers import Dropout, Dense
 from tensorflow.python.keras.models import load_model
 from tensorflow.python.keras.optimizers import Adam
 
@@ -87,7 +88,14 @@ def train(chat_file, amount, quotient):
     print()
 
     print('Saving model...')
-    file_id = int(datetime.now().timestamp())
+    layers = {
+        Dropout: 'do',
+        Dense: 'dn'
+    }
+    file_id = '-'.join(
+        [f'{layers[type(l)]}{l.units if isinstance(l, Dense) else l.rate}'
+         for l in model.layers]
+    )
     name = f'configs/{file_id}.pickle'
     with open(name, 'xb') as file:
         pickle.dump(actives, file, protocol=4)
