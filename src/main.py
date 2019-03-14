@@ -1,5 +1,6 @@
 import os
 import pickle
+import random
 from datetime import datetime
 
 import click
@@ -43,8 +44,22 @@ def train(chat_file, amount, quotient):
     print('Filtering data...')
     actives = get_most_active(lbls, amount)
     data_zip = list(zip(msgs, lbls))
-    f_msgs = [m for m, l in data_zip if l in actives]
-    f_lbls = [l for m, l in data_zip if l in actives]
+    random.shuffle(data_zip)
+
+    print('Justifying data...')
+    least_count = len(list(filter(lambda x: x[1] == actives[-1], data_zip)))
+    just_data = []
+    for act in actives:
+        just_data += list(filter(lambda x: x[1] == act, data_zip))[:least_count]
+
+    f_msgs = [m for m, l in just_data]
+    f_lbls = [l for m, l in just_data]
+
+    # перемешивание, иначе неравномерные выборки
+    random.seed(42)
+    random.shuffle(f_msgs)
+    random.seed(42)
+    random.shuffle(f_lbls)
 
     print('Tokenizing data...')
     data = [get_metrics(msg) for msg in f_msgs]
@@ -73,7 +88,8 @@ def train(chat_file, amount, quotient):
                   metrics=['acc'])
 
     print('Training model...')
-    cbs = [EarlyStopping(monitor='val_loss', patience=5)]
+    cbs = [EarlyStopping(monitor='val_loss', patience=5,
+                         restore_best_weights=True)]
     fit = model.fit(
         trn_data,
         trn_lbls,
