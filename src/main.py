@@ -2,6 +2,7 @@ import os
 import pickle
 import random
 from datetime import datetime
+from ai.tokenizer import tokenize
 
 import click
 import numpy as np
@@ -16,6 +17,7 @@ from config import FILENAME, QUOTIENT
 from data.extractor import get_most_active
 from data.parser import parse_file
 from metrics import get_metrics
+from tensorflow.python.keras.utils import plot_model
 
 __version__ = '0.2.0'
 
@@ -62,19 +64,24 @@ def train(chat_file, amount, quotient):
     random.shuffle(f_lbls)
 
     print('Tokenizing data...')
-    data = [get_metrics(msg) for msg in f_msgs]
-    data = np.array(data)
+    metrics = [get_metrics(msg) for msg in f_msgs]
+    words = tokenize(f_msgs)
+    metrics = np.array(metrics)
+    words = np.array(words)
 
     print('Tokenizing labels...')
     f_lbls = [actives.index(y) for y in f_lbls]
 
     print('Splitting data...')
-    train_len = int(len(data) * quotient)
-    trn_data, trn_lbls = data[:train_len], f_lbls[:train_len]
-    tst_data, tst_lbls = data[train_len:], f_lbls[train_len:]
+    train_len = int(len(metrics) * quotient)
+    m_trn_data, w_trn_data, trn_lbls = metrics[:train_len], words[:train_len], f_lbls[:train_len]
+    m_tst_data, w_tst_data, tst_lbls = metrics[train_len:], words[train_len:], f_lbls[train_len:]
+
+    trn_data = [m_trn_data, w_trn_data]
+    tst_data = [m_tst_data, w_tst_data]
 
     print('Building model...')
-    model = build_model((15,),
+    model = build_model((15, len(words[0])),
                         0.1,
                         1 if amount == 2 else amount,
                         'sigmoid' if amount == 2 else 'softmax')
@@ -87,8 +94,10 @@ def train(chat_file, amount, quotient):
                   loss='sparse_categorical_crossentropy',
                   metrics=['acc'])
 
+    # plot_model(model, to_file='model.png', show_shapes=True)
+
     print('Training model...')
-    cbs = [EarlyStopping(monitor='val_loss', patience=5,
+    cbs = [EarlyStopping(monitor='val_loss', patience=20,
                          restore_best_weights=True)]
     fit = model.fit(
         trn_data,
@@ -109,10 +118,13 @@ def train(chat_file, amount, quotient):
         Dense: 'dn'
     }
     file_id = '-'.join(["%.3f" % fit.history['val_acc'][-1]] +
-                       [str(amount), str(quotient)] +
-                       [f'{layers[type(l)]}'
-                        f'{l.units if isinstance(l, Dense) else l.rate}'
-                        for l in model.layers])
+                       [str(amount), str(quotient)])
+
+    #  +
+    #                        [f'{layers[type(l)]}'
+    #                         f'{l.units if isinstance(l, Dense) else l.rate}'
+    #                         for l in model.layers]
+
     name = f'configs/{file_id}.pickle'
     with open(name, 'xb') as file:
         pickle.dump(actives, file, protocol=4)
