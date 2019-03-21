@@ -2,6 +2,9 @@ import os
 import pickle
 import random
 from datetime import datetime
+
+from keras_preprocessing.text import Tokenizer
+
 from ai.tokenizer import tokenize
 
 import click
@@ -13,7 +16,7 @@ from tensorflow.python.keras.models import load_model
 from tensorflow.python.keras.optimizers import Adam
 
 from ai.model import build_model
-from config import FILENAME, QUOTIENT
+from config import FILENAME, QUOTIENT, DICT_SIZE, DICT_FILE
 from data.extractor import get_most_active
 from data.parser import parse_file
 from metrics import get_metrics
@@ -65,6 +68,7 @@ def train(chat_file, amount, quotient):
 
     print('Tokenizing data...')
     metrics = [get_metrics(msg) for msg in f_msgs]
+    np.save(DICT_FILE, f_msgs)
     words = tokenize(f_msgs)
     metrics = np.array(metrics)
     words = np.array(words)
@@ -97,7 +101,7 @@ def train(chat_file, amount, quotient):
     # plot_model(model, to_file='model.png', show_shapes=True)
 
     print('Training model...')
-    cbs = [EarlyStopping(monitor='val_loss', patience=20,
+    cbs = [EarlyStopping(monitor='val_loss', patience=1,
                          restore_best_weights=True)]
     fit = model.fit(
         trn_data,
@@ -141,8 +145,15 @@ def predict(model, message):
 
     model = load_model(f'configs/{model}.h5')
 
-    data = np.array([get_metrics(message)])
-    result = model.predict(data,
+    metrics = np.array([get_metrics(message)])
+
+    words = np.load(DICT_FILE)
+    words = np.append(words, message)
+    words = tokenize(words)
+
+    tokenized = [words[len(words) - 1]]
+    tokenized = np.array(tokenized)
+    result = model.predict([metrics, tokenized],
                            batch_size=1)
     print()
     print(f'Автор сообщения "{message}":')
