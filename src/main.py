@@ -68,7 +68,6 @@ def train(chat_file, amount, quotient):
 
     print('Tokenizing data...')
     metrics = [get_metrics(msg) for msg in f_msgs]
-    np.save(DICT_FILE, f_msgs)
     words = tokenize(f_msgs)
     metrics = np.array(metrics)
     words = np.array(words)
@@ -85,7 +84,7 @@ def train(chat_file, amount, quotient):
     tst_data = [m_tst_data, w_tst_data]
 
     print('Building model...')
-    model = build_model((20, len(words[0])),
+    model = build_model((22, len(words[0])),
                         0.1,
                         1 if amount == 2 else amount,
                         'sigmoid' if amount == 2 else 'softmax')
@@ -101,7 +100,7 @@ def train(chat_file, amount, quotient):
     # plot_model(model, to_file='model.png', show_shapes=True)
 
     print('Training model...')
-    cbs = [EarlyStopping(monitor='val_loss', patience=1,
+    cbs = [EarlyStopping(monitor='val_loss', patience=10,
                          restore_best_weights=True)]
     fit = model.fit(
         trn_data,
@@ -133,6 +132,7 @@ def train(chat_file, amount, quotient):
     with open(name, 'xb') as file:
         pickle.dump(actives, file, protocol=4)
     model.save(f'configs/{file_id}.h5')
+    np.save(f"{DICT_FILE}{file_id}.npy", f_msgs)
     print(f'Model saved as {file_id}')
 
 
@@ -142,12 +142,12 @@ def train(chat_file, amount, quotient):
 def predict(model, message):
     with open(f'configs/{model}.pickle', 'rb') as file:
         actives = pickle.load(file)
+    words = np.load(f"{DICT_FILE}{model}.npy")
 
     model = load_model(f'configs/{model}.h5')
 
     metrics = np.array([get_metrics(message)])
 
-    words = np.load(DICT_FILE)
     words = np.append(words, message)
     words = tokenize(words)
 

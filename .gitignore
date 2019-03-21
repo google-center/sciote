@@ -279,3 +279,5 @@ $RECYCLE.BIN/
 
 *.h5
 *.pickle
+
+src/configs/

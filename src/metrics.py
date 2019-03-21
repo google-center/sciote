@@ -434,12 +434,12 @@ def commas_around_introductory_words(message):
     points = 0
     for intro_word in intro_words:
         if intro_word in message_ and len(message_) > 1:
-            points = 2
+            points += 2
         elif intro_word in message:
             message = str(message).split(" ")
             if len(message) > 1:
-                points = 1
-    return points
+                points += 1
+    return points / len(intro_words) if len(intro_words) > 0 else 0
 
 
 subordination_unions = ['чтобы', 'будто', 'когда', 'пока', 'ибо', 'потому что',
@@ -456,20 +456,20 @@ def commas_before_subordination_unions(message):
     points_yes = 0
     points_no = 0
     for i in range(0, len(words)):
-        if words[i] == "<U>" and not "." in words[i - 1] and not "!" in words[
+        if words[i] == "<U>" and "." not in words[i - 1] and "!" not in words[
             i - 1] \
-                and not "?" in words[i - 1] and i > 0:
+                and "?" not in words[i - 1] and i > 0:
             if "," in words[i - 1]:
                 points_yes += 1
             else:
                 points_no += 1
 
-    if points_yes == 0:
-        return 1
-    elif points_no == 0:
-        return 2
-    else:
-        return points_yes / points_no
+    # if points_yes == 0:
+    #     return 1
+    # elif points_no == 0:
+    #     return 2
+    # else:
+    return points_yes / (points_yes+points_no) if (points_yes+points_no) > 0 else 0
 
 
 def get_metrics(message):
@@ -492,6 +492,8 @@ def get_metrics(message):
          semicolon_amount(message),
          elongated_words(message),
          1 if uses_yo(message) else 0,
-         probable_gender(message)],
+         probable_gender(message),
+         commas_around_introductory_words(message),
+         commas_before_subordination_unions(message)],
         np.float32
     )
