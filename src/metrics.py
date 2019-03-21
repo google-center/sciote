@@ -3,40 +3,42 @@ import re
 import numpy as np
 
 
-def get_metrics(message):
-    return np.array(
-        [len(message),
-         spacing_around_punctuation(message),
-         avg_ellipsis_length(message),
-         *number_of_dashes(message),
-         all_caps_avg_length(message),
-         *smiley_parenthesis_avg_lengths(message),
-         period_stats(message),
-         capitalized_amount(message),
-         exclamation_amount(message),
-         semicolon_amount(message),
-         elongated_words(message),
-         1 if uses_yo(message) else 0],
-        np.float32
-    )
+def split_into_words(message):
+    """Разделяет сообщение на слова
+
+    :param message: сообщение
+    :return: массив слов
+    """
+    delimiters = "?", "!", ".", "\n", ""
+    regex_pattern = "|".join(map(re.escape, delimiters))
+    arr = re.split(regex_pattern, message)
+    return list(filter(lambda a: a.strip() != '', arr))
 
 
 def split_into_sentences(message):
+    """Разделяет сообщение на предложения
+
+    :param message: исходное сообщение
+    :return: массив строк, каждая из которых представляет отдельное предложение
+    """
     delimiters = "?", "!", ".", "\n"
     regex_pattern = "|".join(map(re.escape, delimiters))
     arr = re.split(regex_pattern, message)
     return list(filter(lambda a: a.strip() != '', arr))
 
 
-# Spacing before and/or after punctuation
-# if ok           ->  point += 1
-# if before       ->  point += 2
-# if on both side ->  point += 0
-# if nowhere      ->  point += 3
 def spacing_around_punctuation(message):
+    """Метрика пробелов вокруг знаков препинания
+
+    :param message: сообщение
+    :return: массив из четырех элементов
+    """
     result = 0
     punctuation_count = 0
     points = 0
+
+    stats = [0, 0, 0, 0]
+
     for i in range(0, len(message)):
         cur = message[i]
         if cur in [".", ",", "?", "!", ":", ";"]:
@@ -44,23 +46,33 @@ def spacing_around_punctuation(message):
                 punctuation_count += 1
                 if message[i - 1] == " " and message[i + 1] != " ":
                     points += 2
+                    stats[2] += 1
                 elif message[i - 1] != " " and message[i + 1] == " ":
                     points += 1
+                    stats[1] += 1
                 elif message[i - 1] != " " and message[i + 1] != " ":
                     points += 3
+                    stats[3] += 1
+                else:
+                    stats[0] += 1
 
             elif i > 0 and i == len(message) - 1:
                 punctuation_count += 1
                 if message[i - 1] != " ":
                     points += 1
+                    stats[1] += 1
     if punctuation_count != 0:
         result = (points / punctuation_count) / 3
-    return result
+        stats = [n / punctuation_count for n in stats]
+    return stats
 
 
-# Usage of ellipsis
-# return average ellipsis length
 def avg_ellipsis_length(message):
+    """Метрика многоточий
+
+    :param message: сообщение
+    :return: средняя длина многоточия
+    """
     result = 0
     length = 0
     count_sequence = 0
@@ -79,25 +91,31 @@ def avg_ellipsis_length(message):
     return result
 
 
-# Usage of em and en dashes
-# result[0] = "-"
-# result[1] = "–"
-# result[2] = "—"
-def number_of_dashes(message):
-    result = [0, 0, 0]
-    for char in message:
-        if char == "-":
-            result[0] += 1
-        elif char == "–":
-            result[1] += 1
-        elif char == "—":
-            result[2] += 1
-    return result
+def number_of_dashes(message: str):
+    """Метрика использования дефисов и коротких/длинных тире
+
+    :param message: сообщение
+    :return: массив из трёх чисел: коэффициент дефисов, коэффициент коротких
+             тире, количество длинных тире
+    """
+
+    result = [
+        message.count("-"),
+        message.count("–"),
+        message.count("—")
+    ]
+
+    dash_sum = sum(result)  # 9
+
+    return [n / dash_sum for n in result] if dash_sum != 0 else result
 
 
-# Usage of all caps
-# return average length of substrings written by caps
 def all_caps_avg_length(message):
+    """Метрика использование капса
+
+    :param message: сообщение
+    :return: средняя длина подстрок, набранных капсом
+    """
     caps_seqs = []
     tracking = False
     cur_seq_length = 0
@@ -122,10 +140,13 @@ def all_caps_avg_length(message):
     return total_length / len(caps_seqs) if len(caps_seqs) != 0 else 0
 
 
-# Usage of single parenthesis smileys
-# result[0] -> avg length of substrings consisting only of ")"
-# result[1] -> average length of substrings consisting only of "("
 def smiley_parenthesis_avg_lengths(message):
+    """Метрика использования скобочек-смайликов
+
+    :param message: сообщение
+    :return: массив из двух чисел: средняя длина подстроки вида /)+/, средняя
+             длина подстроки вида /(+/
+    """
     result = [0, 0]
     count_happy_brackets_seq = 0
     count_sad_brackets_seq = 0
@@ -158,20 +179,23 @@ def smiley_parenthesis_avg_lengths(message):
     return result
 
 
-# Если строка оканчивается точкой, возвращаем true,  иначе -  false
-def ends_with_period(sentence):
-    return sentence.endswith('.')
-
-
 def period_stats(message):
+    """Метрика количества точек
+
+    :param message: сообщение
+    :return: коэффициент предложений, кончающихся на точку, ко всем предложениям
+    """
     sentences = split_into_sentences(message)
     periods = message.count('.')
     return periods / len(sentences) if len(sentences) > 0 else 0
 
 
-# Делим сообщения на предложения, считаем, сколько раз
-# сообщение начинается с заглавной. Возвращаем отношение
 def capitalized_amount(message):
+    """Метрика заглавных букв в начале предложений
+
+    :param message: сообщение
+    :return: коэффициент предложений, начинающихся с заглавной буквы
+    """
     arr = split_into_sentences(message)
     count = 0
     for element in arr:
@@ -180,8 +204,12 @@ def capitalized_amount(message):
     return count / len(arr) if len(arr) > 0 else 0
 
 
-# Если строка содержит ё, возвращаем true,  иначе -  false
 def uses_yo(message):
+    """Метрика буквы Ё
+
+    :param message: сообщение
+    :return: True, если "Ё" есть, иначе False
+    """
     return "ё" in message or "Ё" in message
 
 
@@ -200,7 +228,8 @@ def exclamation_amount(message):
 
 # возвращаем количество ; в сообщении
 def semicolon_amount(message):
-    return message.count(';')
+    amt = len(split_into_sentences(message))
+    return message.count(';') / amt if amt != 0 else 0
 
 
 # считаем кол-во слов, которые содержат в себе подстроку из повторяющихся букв
@@ -220,3 +249,50 @@ def elongated_words(message):
                 count += 1
                 break
     return count / len(arr)
+
+
+def probable_gender(message):
+    words = split_into_words(message)
+
+    if len(words) > 1 and words[0].lower() == "я":
+        if len(words[1]) >= 3:
+            result = 0
+            for word in words[1:5]:
+                if word[-3:] in ["ала", "ыла", "ола", "ила", "ела", "ула",
+                                 "яла"] \
+                        or word[-5:] in ["алась", "ылась", "олась", "илась",
+                                         "елась", "улась", "ялась"]:
+                    result += 1
+                elif word[-2:] in ["ал", "ыл", "ол", "ил", "ел", "ул", "ял"] \
+                        or word[-4:] in ["ался", "ылся", "олся", "ился", "елся",
+                                         "улся", "ялся"]:
+                    result -= 1
+
+            return result / 4
+
+    return 0
+
+
+def get_metrics(message):
+    """Возвращает массив метрик для сообщения
+
+    :param message: сообщение
+    :return: NumPy-массив чисел в формате float32
+    """
+    return np.array(
+        [len(message),
+         len(split_into_words(message)),
+         *spacing_around_punctuation(message),
+         avg_ellipsis_length(message),
+         *number_of_dashes(message),
+         all_caps_avg_length(message),
+         *smiley_parenthesis_avg_lengths(message),
+         period_stats(message),
+         capitalized_amount(message),
+         exclamation_amount(message),
+         semicolon_amount(message),
+         elongated_words(message),
+         1 if uses_yo(message) else 0,
+         probable_gender(message)],
+        np.float32
+    )

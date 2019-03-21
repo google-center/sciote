@@ -81,7 +81,7 @@ def train(chat_file, amount, quotient):
     tst_data = [m_tst_data, w_tst_data]
 
     print('Building model...')
-    model = build_model((15, len(words[0])),
+    model = build_model((20, len(words[0])),
                         0.1,
                         1 if amount == 2 else amount,
                         'sigmoid' if amount == 2 else 'softmax')
