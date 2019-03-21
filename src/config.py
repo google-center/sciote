@@ -25,3 +25,6 @@ OUT_DIM = 50
 
 # фактор уменьшения входа на слое MaxPooling
 POOL_SIZE = 2
+
+#
+DICT_FILE = 'src/data/dict.npy'
