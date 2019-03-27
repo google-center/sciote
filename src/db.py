@@ -1,6 +1,7 @@
 import sqlite3 as sq
 
 import numpy as np
+from tensorflow.python.keras.callbacks import Callback
 
 conn = sq.connect("sciote.sqlite3")
 cur = conn.cursor()
@@ -30,7 +31,9 @@ def save_message(author, text, attachments):
 
 
 def save_training(t_id, amt, qnt):
-    cur.execute("INSERT INTO trainings(id, amount, quotient) VALUES(?,?,?)",
+    cur.execute("INSERT INTO trainings("
+                "id, amount, quotient, cur_epoch, cur_acc, cur_loss)"
+                " VALUES(?,?,?,0,0.0,0.0)",
                 [t_id, amt, qnt])
     conn.commit()
 
@@ -45,6 +48,11 @@ def update_training(t_id, epoch, acc, loss):
 def training_status(t_id):
     cur.execute("SELECT * FROM trainings WHERE id=?", [t_id])
     tr = cur.fetchone()
+    conn.commit()
+
+    if tr is None:
+        return None
+
     if tr[3] is not None and tr[4] is not None:
         completed = True
         acc = tr[3]
@@ -63,9 +71,39 @@ def save_training_result(t_id, acc, loss):
     conn.commit()
 
 
+def remove_training(t_id):
+    cur.execute("DELETE FROM trainings WHERE id=?",
+                [t_id])
+    conn.commit()
+
+
 def get_all_messages():
     cur.execute("SELECT * FROM messages")
-    return cur.fetchall()
+    tr = cur.fetchall()
+    conn.commit()
+    return tr
+
+
+def get_all_trainings():
+    cur.execute("SELECT id, amount, quotient, accuracy, cur_acc FROM trainings")
+    tr = cur.fetchall()
+    conn.commit()
+    return tr
+
+
+class UpdateProgressCallback(Callback):
+    def __init__(self, tid):
+        super(UpdateProgressCallback, self).__init__()
+        self.tid = tid
+
+    def on_epoch_begin(self, epoch, logs=None):
+        return
+
+    def on_epoch_end(self, epoch, logs=None):
+        update_training(self.tid,
+                        epoch + 1,
+                        float(logs.get("acc")),
+                        float(logs.get("loss")))
 
 
 if __name__ == '__main__':
