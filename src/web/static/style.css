@@ -26,6 +26,11 @@ h1.title {
     text-align: center;
 }
 
+h1.title small {
+    font-size: 28px;
+    color: #666;
+}
+
 h2.title {
     font-size: 36px;
     margin-top: 10px;
@@ -41,11 +46,17 @@ input {
     margin-right: 10px;
 }
 
+form {
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
 form section {
     margin-bottom: 30px;
 }
 
-input[type=submit] {
+input[type=submit],
+input[type=button] {
     display: block;
     font-size: 24px;
     padding: 5px 25px;

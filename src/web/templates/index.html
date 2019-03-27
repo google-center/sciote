@@ -1,0 +1,54 @@
+{% extends 'wrap.html' %}
+
+{% block title %}
+    Main page
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <a href="/">
+            <img class="logo" src="/static/logo.png" alt="Sciote logo">
+        </a>
+        <h1 class="title">
+            Models
+        </h1>
+        <section>
+            <table>
+                <thead>
+                <tr>
+                    <th>Model ID</th>
+                    <th>People</th>
+                    <th>Quotient</th>
+                    <th>Accuracy</th>
+                    <th></th>
+                </tr>
+                </thead>
+                {% for model in models %}
+                    <tr {% if model[3] == None %}style="color:blueviolet"{% endif %}>
+                        <td>{{ model[0] }}</td>
+                        <td>{{ model[1] }}</td>
+                        <td>{{ model[2] }}</td>
+                        <td>
+                            {% if model[3] != None %}
+                                {{ "%0.2f"|format(model[3]*100 if model[3] else 0)}}
+                            {% else %}
+                                {{ "%0.2f"|format((model[4]*100) if model[4] else 0)}}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if model[3] != None %}
+                                <a href="{{ url_for('predict', tid=model[0]) }}">Predict</a>
+                            {% else %}
+                                <a href="{{ url_for('train_status_page', tid=model[0]) }}">Status</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+            <form action="{{ url_for('train') }}"
+                  method="get">
+                <input type="submit" value="Train more!">
+            </form>
+        </section>
+    </div>
+{% endblock %}
