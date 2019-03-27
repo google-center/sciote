@@ -2,9 +2,6 @@
 # DEFAULT PARAMETERS #
 ######################
 
-# имя файла по умолчанию
-FILENAME = 'src/data/chat.txt'
-
 # коэффицент training/testing data
 QUOTIENT = 0.5
 

@@ -13,10 +13,11 @@ from tensorflow.python.keras.optimizers import Adam
 
 from ai.model import build_model
 from ai.tokenizer import tokenize
-from config import FILENAME, QUOTIENT, CONFIG_DIR
+from config import QUOTIENT, CONFIG_DIR
 from data.extractor import get_most_active
-from data.parser import parse_file
-from db import get_all_messages, save_training, save_training_result
+from data.parser_html import parse_html
+from db import get_all_messages, save_training, save_training_result, \
+    UpdateProgressCallback
 from metrics import get_metrics
 
 __version__ = '0.2.0'
@@ -39,10 +40,10 @@ def train(amount, quotient):
 
 
 @cli.command()
-@click.argument('chat_file', default=FILENAME)
-def parse(chat_file):
+@click.argument('chat_folder')
+def parse(chat_folder):
     print('Parsing file...')
-    msgs, _ = parse_file(chat_file)
+    msgs, _, _ = parse_html('src/data/'+chat_folder)
     print(f'Parsed {len(msgs)} messages')
 
 
@@ -120,7 +121,8 @@ def actual_train(amount, quotient,
 
     print('Training model...')
     cbs = [EarlyStopping(monitor='val_loss', patience=10,
-                         restore_best_weights=True)]
+                         restore_best_weights=True),
+           UpdateProgressCallback(file_id)]
     fit = model.fit(
         trn_data,
         trn_lbls,
@@ -152,6 +154,10 @@ def actual_train(amount, quotient,
 @click.argument('model')
 @click.argument('message')
 def predict(model, message):
+    actual_predict(model, message)
+
+
+def actual_predict(model, message):
     with open(f'{CONFIG_DIR}{model}.pickle', 'rb') as file:
         actives = pickle.load(file)
     words = np.load(f"{CONFIG_DIR}{model}.npy")
@@ -177,6 +183,8 @@ def predict(model, message):
 
     for name, val in sorted(res_tup, key=lambda x: x[1], reverse=True):
         print(f'{name}: {val}')
+
+    return res_tup
 
 
 if __name__ == '__main__':
