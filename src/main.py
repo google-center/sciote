@@ -3,6 +3,7 @@ import pickle
 import random
 import statistics
 import sys
+from datetime import datetime
 
 import click
 import numpy as np
@@ -44,14 +45,14 @@ def train(amount, quotient):
 @click.argument('chat_folder')
 def parse(chat_folder):
     print('Parsing file...')
-    msgs, _, _ = parse_html('src/data/'+chat_folder)
+    msgs, _, _ = parse_html('src/data/' + chat_folder)
     print(f'Parsed {len(msgs)} messages')
 
 
 def actual_train(amount, quotient,
                  file_id=int(datetime.now().timestamp())):
-
     save_training(file_id, amount, quotient)
+    os.mkdir(f"{CONFIG_DIR}{file_id}")
 
     print('Getting data...')
     msgs_list = get_all_messages()
@@ -149,12 +150,13 @@ def actual_train(amount, quotient,
                          float(fit.history['val_acc'][-1]),
                          float(fit.history['val_loss'][-1]))
 
-    name = f'{CONFIG_DIR}{file_id}.pickle'
+    name = f'{CONFIG_DIR}{file_id}/actives.pickle'
     with open(name, 'xb') as file:
         pickle.dump(actives, file, protocol=4)
-    model.save(f'{CONFIG_DIR}{file_id}.h5')
-    np.save(f"{CONFIG_DIR}{file_id}-msgs.npy", f_msgs)
-    np.save(f"{CONFIG_DIR}{file_id}-lbls.npy", f_lbls)
+
+    model.save(f'{CONFIG_DIR}{file_id}/model.h5')
+    np.save(f"{CONFIG_DIR}{file_id}/msgs.npy", f_msgs)
+    np.save(f"{CONFIG_DIR}{file_id}/lbls.npy", f_lbls)
     print(f'Model saved as {file_id}')
 
 
@@ -166,11 +168,11 @@ def predict(model, message):
 
 
 def actual_predict(model, message):
-    with open(f'{CONFIG_DIR}{model}.pickle', 'rb') as file:
+    with open(f'{CONFIG_DIR}{model}/actives.pickle', 'rb') as file:
         actives = pickle.load(file)
-    words = np.load(f"{CONFIG_DIR}{model}.npy")
 
-    model = load_model(f'{CONFIG_DIR}{model}.h5')
+    words = np.load(f"{CONFIG_DIR}{model}/msgs.npy")
+    model = load_model(f'{CONFIG_DIR}{model}/model.h5')
 
     metrics = np.array([get_metrics(message)])
 
@@ -193,6 +195,8 @@ def actual_predict(model, message):
         print(f'{name}: {val}')
 
     return res_tup
+
+
 @cli.command()
 @click.argument('model')
 def fmeasure(model):
@@ -200,14 +204,16 @@ def fmeasure(model):
 
 
 @cli.command()
-@click.argument('chat_file', default=FILENAME)
 @click.option('--amount', '-a', default=5,
               help='Amount of people to analyze')
 @click.option('--quotient', '-q', default=QUOTIENT,
               help='Relation between train/test data')
-def kfold(chat_file, amount, quotient):
+def kfold(amount, quotient):
     print('Parsing file...')
-    msgs, lbls = parse_file(chat_file)
+    msgs_list = get_all_messages()
+    lbls, msgs, _ = [r[0] for r in msgs_list], \
+                    [r[1] for r in msgs_list], \
+                    [r[2] for r in msgs_list]
     print(f'Parsed {len(msgs)} messages')
     if len(msgs) != len(lbls):
         raise AssertionError('Amounts of messages and labels are not equal. '
@@ -296,23 +302,17 @@ def kfold(chat_file, amount, quotient):
         print()
 
         print('Saving model...')
-        layers = {
-            Dropout: 'do',
-            Dense: 'dn'
-        }
+
         file_id = '-'.join(["%.3f" % fit.history['val_acc'][-1]] +
                            [str(amount), str(quotient)])
 
-        #  +
-        #                        [f'{layers[type(l)]}'
-        #                         f'{l.units if isinstance(l, Dense) else l.rate}'
-        #                         for l in model.layers]
-
-        name = f'configs/{file_id}.pickle'
+        name = f'{CONFIG_DIR}{file_id}/actives.pickle'
         with open(name, 'xb') as file:
             pickle.dump(actives, file, protocol=4)
-        model.save(f'configs/{file_id}.h5')
-        np.save(f"{CONFIG_FOLDER}{file_id}.npy", f_msgs)
+
+        model.save(f'{CONFIG_DIR}{file_id}/model.h5')
+        np.save(f"{CONFIG_DIR}{file_id}/msgs.npy", f_msgs)
+        np.save(f"{CONFIG_DIR}{file_id}/lbls.npy", f_lbls)
         print(f'Model saved as {file_id}')
 
         accuracy_data.append(fit.history['val_acc'][-1])
