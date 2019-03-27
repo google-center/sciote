@@ -9,15 +9,13 @@ from metrics import get_metrics
 
 
 def f1(model):
-    with open(f'{CONFIG_DIR}{model}.pickle', 'rb') as file:
-        actives = pickle.load(file)
-    msgs = np.load("%s%s-msgs.npy" % (CONFIG_DIR, model))
-    lbls = np.load("%s%s-lbls.npy" % (CONFIG_DIR, model))
+    msgs = np.load(f"{CONFIG_DIR}{model}/msgs.npy")
+    lbls = np.load(f"{CONFIG_DIR}{model}/lbls.npy")
 
     metrics = np.array([get_metrics(msg) for msg in msgs])
     tokenized = np.array(tokenize(msgs))
 
-    model = load_model(f'{CONFIG_DIR}{model}.h5')
+    model = load_model(f'{CONFIG_DIR}{model}/model.h5')
 
     people = lbls.max() + 1
     lens = np.zeros((people,))
@@ -32,7 +30,10 @@ def f1(model):
 
     if metrics.shape[0] == lbls.shape[0]:
         for i in range(metrics.shape[0]):
-            res = np.array(model.predict([np.array([metrics[i]]), np.array([tokenized[i]])], batch_size=1))
+            res = np.array(
+                model.predict([np.array([metrics[i]]),
+                               np.array([tokenized[i]])],
+                              batch_size=1))
             if res.argmax() == lbls[i]:
                 true_positives[res.argmax()] += 1
             else:
@@ -42,7 +43,7 @@ def f1(model):
 
     precision = np.zeros((people,))
     recall = np.zeros((people,))
-    f1 = np.zeros((people,))
+    f = np.zeros((people,))
     for i in range(people):
         # Сколько выбранных сообщений правильны?
         precision[i] = true_positives[i] / relevant[i]
@@ -51,10 +52,6 @@ def f1(model):
         recall[i] = true_positives[i] / (true_positives[i] + false_positives[i])
 
         # F-measure для каждого отдельного человека
-        f1[i] = (2 * precision[i] * recall[i]) / (precision[i] + recall[i])
+        f[i] = (2 * precision[i] * recall[i]) / (precision[i] + recall[i])
 
-    return f1
-
-
-if __name__ == '__main__':
-    f1("0.318-5-0.5")
+    return f

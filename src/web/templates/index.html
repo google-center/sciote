@@ -24,19 +24,15 @@
                 </tr>
                 </thead>
                 {% for model in models %}
-                    <tr {% if model[3] == None %}style="color:blueviolet"{% endif %}>
+                    <tr {% if not model[4] %}style="color:blueviolet"{% endif %}>
                         <td>{{ model[0] }}</td>
                         <td>{{ model[1] }}</td>
                         <td>{{ model[2] }}</td>
                         <td>
-                            {% if model[3] != None %}
-                                {{ "%0.2f"|format(model[3]*100 if model[3] else 0)}}
-                            {% else %}
-                                {{ "%0.2f"|format((model[4]*100) if model[4] else 0)}}
-                            {% endif %}
+                            {{ "%0.2f"|format(model[3]*100 if model[3] else 0)}}
                         </td>
                         <td>
-                            {% if model[3] != None %}
+                            {% if model[4] %}
                                 <a href="{{ url_for('predict', tid=model[0]) }}">Predict</a>
                             {% else %}
                                 <a href="{{ url_for('train_status_page', tid=model[0]) }}">Status</a>
