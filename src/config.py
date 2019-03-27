@@ -2,9 +2,6 @@
 # DEFAULT PARAMETERS #
 ######################
 
-# имя файла по умолчанию
-FILENAME = 'data/chat.txt'
-
 # коэффицент training/testing data
 QUOTIENT = 0.5
 
@@ -27,4 +24,4 @@ OUT_DIM = 50
 POOL_SIZE = 2
 
 #
-CONFIG_FOLDER = 'configs/'
+CONFIG_DIR = 'src/configs/'

@@ -281,3 +281,5 @@ $RECYCLE.BIN/
 *.pickle
 
 src/configs/
+*.sqlite3
+src/data/**/*.html

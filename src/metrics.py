@@ -220,7 +220,7 @@ def exclamation_amount(message):
     amt = message.count('!')
     sentences = split_into_sentences(message)
 
-    if message[-1] == '!':
+    if len(message) and message[-1] == '!':
         return amt / len(sentences) if len(sentences) > 0 else 0
     else:
         return (amt - 1) / len(sentences) if len(sentences) > 0 else 0
@@ -248,7 +248,7 @@ def elongated_words(message):
             if c == 3:
                 count += 1
                 break
-    return count / len(arr)
+    return count / len(arr) if len(arr) > 0 else 0
 
 
 def probable_gender(message):

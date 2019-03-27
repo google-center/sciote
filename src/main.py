@@ -2,21 +2,23 @@ import os
 import pickle
 import random
 import statistics
+import sys
 
 import click
 import numpy as np
 from tensorflow import logging
 from tensorflow.python.keras.callbacks import EarlyStopping
-from tensorflow.python.keras.layers import Dropout, Dense
 from tensorflow.python.keras.models import load_model
 from tensorflow.python.keras.optimizers import Adam
 
 from ai.model import build_model
 from ai.tokenizer import tokenize
-from config import FILENAME, QUOTIENT, CONFIG_FOLDER
+from config import QUOTIENT, CONFIG_DIR
 from data.extractor import get_most_active
-from data.parser import parse_file
 from f_measure import f1
+from data.parser_html import parse_html
+from db import get_all_messages, save_training, save_training_result, \
+    UpdateProgressCallback
 from metrics import get_metrics
 
 __version__ = '0.2.0'
@@ -30,15 +32,37 @@ def cli():
 
 
 @cli.command()
-@click.argument('chat_file', default=FILENAME)
 @click.option('--amount', '-a', default=5,
               help='Amount of people to analyze')
 @click.option('--quotient', '-q', default=QUOTIENT,
               help='Relation between train/test data')
-def train(chat_file, amount, quotient):
+def train(amount, quotient):
+    return actual_train(amount, quotient)
+
+
+@cli.command()
+@click.argument('chat_folder')
+def parse(chat_folder):
     print('Parsing file...')
-    msgs, lbls = parse_file(chat_file)
+    msgs, _, _ = parse_html('src/data/'+chat_folder)
     print(f'Parsed {len(msgs)} messages')
+
+
+def actual_train(amount, quotient,
+                 file_id=int(datetime.now().timestamp())):
+
+    save_training(file_id, amount, quotient)
+
+    print('Getting data...')
+    msgs_list = get_all_messages()
+    lbls, msgs, _ = [r[0] for r in msgs_list], \
+                    [r[1] for r in msgs_list], \
+                    [r[2] for r in msgs_list]
+    print(f'Got {len(msgs)} messages')
+
+    if len(msgs) == 0:
+        sys.exit(1)
+
     if len(msgs) != len(lbls):
         raise AssertionError('Amounts of messages and labels are not equal. '
                              'Please check your parser.')
@@ -104,7 +128,8 @@ def train(chat_file, amount, quotient):
 
     print('Training model...')
     cbs = [EarlyStopping(monitor='val_loss', patience=10,
-                         restore_best_weights=True)]
+                         restore_best_weights=True),
+           UpdateProgressCallback(file_id)]
     fit = model.fit(
         trn_data,
         trn_lbls,
@@ -119,24 +144,17 @@ def train(chat_file, amount, quotient):
     print()
 
     print('Saving model...')
-    layers = {
-        Dropout: 'do',
-        Dense: 'dn'
-    }
-    file_id = '-'.join(["%.3f" % fit.history['val_acc'][-1]] +
-                       [str(amount), str(quotient)])
 
-    #  +
-    #                        [f'{layers[type(l)]}'
-    #                         f'{l.units if isinstance(l, Dense) else l.rate}'
-    #                         for l in model.layers]
+    save_training_result(file_id,
+                         float(fit.history['val_acc'][-1]),
+                         float(fit.history['val_loss'][-1]))
 
-    name = f'configs/{file_id}.pickle'
+    name = f'{CONFIG_DIR}{file_id}.pickle'
     with open(name, 'xb') as file:
         pickle.dump(actives, file, protocol=4)
-    model.save(f'{CONFIG_FOLDER}{file_id}.h5')
-    np.save(f"{CONFIG_FOLDER}{file_id}-msgs.npy", f_msgs)
-    np.save(f"{CONFIG_FOLDER}{file_id}-lbls.npy", f_lbls)
+    model.save(f'{CONFIG_DIR}{file_id}.h5')
+    np.save(f"{CONFIG_DIR}{file_id}-msgs.npy", f_msgs)
+    np.save(f"{CONFIG_DIR}{file_id}-lbls.npy", f_lbls)
     print(f'Model saved as {file_id}')
 
 
@@ -144,11 +162,15 @@ def train(chat_file, amount, quotient):
 @click.argument('model')
 @click.argument('message')
 def predict(model, message):
-    with open(f'{CONFIG_FOLDER}{model}.pickle', 'rb') as file:
-        actives = pickle.load(file)
-    words = np.load(f"{CONFIG_FOLDER}{model}-msgs.npy")
+    actual_predict(model, message)
 
-    model = load_model(f'configs/{model}.h5')
+
+def actual_predict(model, message):
+    with open(f'{CONFIG_DIR}{model}.pickle', 'rb') as file:
+        actives = pickle.load(file)
+    words = np.load(f"{CONFIG_DIR}{model}.npy")
+
+    model = load_model(f'{CONFIG_DIR}{model}.h5')
 
     metrics = np.array([get_metrics(message)])
 
@@ -170,7 +192,7 @@ def predict(model, message):
     for name, val in sorted(res_tup, key=lambda x: x[1], reverse=True):
         print(f'{name}: {val}')
 
-
+    return res_tup
 @cli.command()
 @click.argument('model')
 def fmeasure(model):

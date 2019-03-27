@@ -4,20 +4,20 @@ import numpy as np
 from tensorflow.python.keras.models import load_model
 
 from ai.tokenizer import tokenize
-from config import CONFIG_FOLDER
+from config import CONFIG_DIR
 from metrics import get_metrics
 
 
 def f1(model):
-    with open(f'{CONFIG_FOLDER}{model}.pickle', 'rb') as file:
+    with open(f'{CONFIG_DIR}{model}.pickle', 'rb') as file:
         actives = pickle.load(file)
-    msgs = np.load("%s%s-msgs.npy" % (CONFIG_FOLDER, model))
-    lbls = np.load("%s%s-lbls.npy" % (CONFIG_FOLDER, model))
+    msgs = np.load("%s%s-msgs.npy" % (CONFIG_DIR, model))
+    lbls = np.load("%s%s-lbls.npy" % (CONFIG_DIR, model))
 
     metrics = np.array([get_metrics(msg) for msg in msgs])
     tokenized = np.array(tokenize(msgs))
 
-    model = load_model(f'{CONFIG_FOLDER}{model}.h5')
+    model = load_model(f'{CONFIG_DIR}{model}.h5')
 
     people = lbls.max() + 1
     lens = np.zeros((people,))
