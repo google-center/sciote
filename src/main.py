@@ -1,26 +1,23 @@
 import os
 import pickle
 import random
+import sys
 from datetime import datetime
-
-from keras_preprocessing.text import Tokenizer
-
-from ai.tokenizer import tokenize
 
 import click
 import numpy as np
 from tensorflow import logging
 from tensorflow.python.keras.callbacks import EarlyStopping
-from tensorflow.python.keras.layers import Dropout, Dense
 from tensorflow.python.keras.models import load_model
 from tensorflow.python.keras.optimizers import Adam
 
 from ai.model import build_model
-from config import FILENAME, QUOTIENT, DICT_SIZE, DICT_FILE
+from ai.tokenizer import tokenize
+from config import FILENAME, QUOTIENT, CONFIG_DIR
 from data.extractor import get_most_active
 from data.parser import parse_file
+from db import get_all_messages, save_training, save_training_result
 from metrics import get_metrics
-from tensorflow.python.keras.utils import plot_model
 
 __version__ = '0.2.0'
 
@@ -33,15 +30,37 @@ def cli():
 
 
 @cli.command()
-@click.argument('chat_file', default=FILENAME)
 @click.option('--amount', '-a', default=5,
               help='Amount of people to analyze')
 @click.option('--quotient', '-q', default=QUOTIENT,
               help='Relation between train/test data')
-def train(chat_file, amount, quotient):
+def train(amount, quotient):
+    return actual_train(amount, quotient)
+
+
+@cli.command()
+@click.argument('chat_file', default=FILENAME)
+def parse(chat_file):
     print('Parsing file...')
-    msgs, lbls = parse_file(chat_file)
+    msgs, _ = parse_file(chat_file)
     print(f'Parsed {len(msgs)} messages')
+
+
+def actual_train(amount, quotient,
+                 file_id=int(datetime.now().timestamp())):
+
+    save_training(file_id, amount, quotient)
+
+    print('Getting data...')
+    msgs_list = get_all_messages()
+    lbls, msgs, _ = [r[0] for r in msgs_list], \
+                    [r[1] for r in msgs_list], \
+                    [r[2] for r in msgs_list]
+    print(f'Got {len(msgs)} messages')
+
+    if len(msgs) == 0:
+        sys.exit(1)
+
     if len(msgs) != len(lbls):
         raise AssertionError('Amounts of messages and labels are not equal. '
                              'Please check your parser.')
@@ -116,23 +135,16 @@ def train(chat_file, amount, quotient):
     print()
 
     print('Saving model...')
-    layers = {
-        Dropout: 'do',
-        Dense: 'dn'
-    }
-    file_id = '-'.join(["%.3f" % fit.history['val_acc'][-1]] +
-                       [str(amount), str(quotient)])
 
-    #  +
-    #                        [f'{layers[type(l)]}'
-    #                         f'{l.units if isinstance(l, Dense) else l.rate}'
-    #                         for l in model.layers]
+    save_training_result(file_id,
+                         float(fit.history['val_acc'][-1]),
+                         float(fit.history['val_loss'][-1]))
 
-    name = f'configs/{file_id}.pickle'
+    name = f'{CONFIG_DIR}{file_id}.pickle'
     with open(name, 'xb') as file:
         pickle.dump(actives, file, protocol=4)
-    model.save(f'configs/{file_id}.h5')
-    np.save(f"{DICT_FILE}{file_id}.npy", f_msgs)
+    model.save(f'{CONFIG_DIR}{file_id}.h5')
+    np.save(f"{CONFIG_DIR}{file_id}.npy", f_msgs)
     print(f'Model saved as {file_id}')
 
 
@@ -140,11 +152,11 @@ def train(chat_file, amount, quotient):
 @click.argument('model')
 @click.argument('message')
 def predict(model, message):
-    with open(f'configs/{model}.pickle', 'rb') as file:
+    with open(f'{CONFIG_DIR}{model}.pickle', 'rb') as file:
         actives = pickle.load(file)
-    words = np.load(f"{DICT_FILE}{model}.npy")
+    words = np.load(f"{CONFIG_DIR}{model}.npy")
 
-    model = load_model(f'configs/{model}.h5')
+    model = load_model(f'{CONFIG_DIR}{model}.h5')
 
     metrics = np.array([get_metrics(message)])
 

@@ -3,7 +3,7 @@
 ######################
 
 # имя файла по умолчанию
-FILENAME = 'data/chat.txt'
+FILENAME = 'src/data/chat.txt'
 
 # коэффицент training/testing data
 QUOTIENT = 0.5
@@ -27,4 +27,4 @@ OUT_DIM = 50
 POOL_SIZE = 2
 
 #
-DICT_FILE = 'configs/'
+CONFIG_DIR = 'src/configs/'

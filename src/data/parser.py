@@ -1,6 +1,8 @@
 import re
 import sys
 
+from db import save_message
+
 
 def parse_file(filename):
     try:
@@ -50,6 +52,8 @@ def parse_file(filename):
                 name_list.append(name)
                 # обрезаем сообщение, чтобы не хранить символы новой строки
                 message_list.append(msg.strip())
+
+                save_message(name, msg.strip(), '')
         else:
             i += 1
 
