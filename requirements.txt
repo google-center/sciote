@@ -1,3 +1,4 @@
 Click==7.0
 tensorflow==1.13.1
 numpy==1.16.2
+lxml=4.3.3
