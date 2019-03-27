@@ -10,13 +10,12 @@ cur = conn.cursor()
 def init():
     cur.execute("""CREATE TABLE trainings (
                 id INTEGER PRIMARY KEY,
-                amount INTEGER,
-                quotient REAL,
-                accuracy REAL,
-                loss REAL,
-                cur_epoch INTEGER,
-                cur_acc REAL,
-                cur_loss REAL);""")
+                amount INTEGER NOT NULL ,
+                quotient REAL NOT NULL ,
+                accuracy REAL DEFAULT 0,
+                loss REAL DEFAULT 0,
+                epoch INTEGER DEFAULT 0,
+                finished INTEGER DEFAULT 0);""")
     cur.execute("""CREATE TABLE messages (
                 author TEXT,
                 text TEXT,
@@ -32,15 +31,15 @@ def save_message(author, text, attachments):
 
 def save_training(t_id, amt, qnt):
     cur.execute("INSERT INTO trainings("
-                "id, amount, quotient, cur_epoch, cur_acc, cur_loss)"
-                " VALUES(?,?,?,0,0.0,0.0)",
+                "id, amount, quotient)"
+                " VALUES(?,?,?)",
                 [t_id, amt, qnt])
     conn.commit()
 
 
 def update_training(t_id, epoch, acc, loss):
     cur.execute(
-        "UPDATE trainings SET cur_epoch=?, cur_acc=?, cur_loss=? WHERE id=?",
+        "UPDATE trainings SET epoch=?, accuracy=?, loss=? WHERE id=?",
         [epoch, acc, loss, t_id])
     conn.commit()
 
@@ -53,15 +52,10 @@ def training_status(t_id):
     if tr is None:
         return None
 
-    if tr[3] is not None and tr[4] is not None:
-        completed = True
-        acc = tr[3]
-        loss = tr[4]
-    else:
-        completed = False
-        acc = tr[6]
-        loss = tr[7]
+    acc = tr[3]
+    loss = tr[4]
     epoch = tr[5]
+    completed = bool(tr[6])
     return completed, acc, loss, epoch
 
 
@@ -85,10 +79,10 @@ def get_all_messages():
 
 
 def get_all_trainings():
-    cur.execute("SELECT id, amount, quotient, accuracy, cur_acc FROM trainings")
+    cur.execute("SELECT id, amount, quotient, accuracy, finished FROM trainings")
     tr = cur.fetchall()
     conn.commit()
-    return tr
+    return list([(row[0], row[1], row[2], row[3], bool(row[4]))for row in tr])
 
 
 class UpdateProgressCallback(Callback):

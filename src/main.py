@@ -109,8 +109,6 @@ def actual_train(amount, quotient,
     trn_data = [m_trn_data, w_trn_data]
     tst_data = [m_tst_data, w_tst_data]
 
-    print(f_lbls)
-
     print('Building model...')
     model = build_model((22, len(words[0])),
                         0.1,
