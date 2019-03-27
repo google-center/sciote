@@ -282,3 +282,4 @@ $RECYCLE.BIN/
 
 src/configs/
 *.sqlite3
+src/data/**/*.html
