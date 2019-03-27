@@ -1,11 +1,6 @@
 import os
 import pickle
 import random
-from datetime import datetime
-
-from keras_preprocessing.text import Tokenizer
-
-from ai.tokenizer import tokenize
 
 import click
 import numpy as np
@@ -16,11 +11,12 @@ from tensorflow.python.keras.models import load_model
 from tensorflow.python.keras.optimizers import Adam
 
 from ai.model import build_model
-from config import FILENAME, QUOTIENT, DICT_SIZE, DICT_FILE
+from ai.tokenizer import tokenize
+from config import FILENAME, QUOTIENT, CONFIG_FOLDER
 from data.extractor import get_most_active
 from data.parser import parse_file
+from f_measure import f1
 from metrics import get_metrics
-from tensorflow.python.keras.utils import plot_model
 
 __version__ = '0.2.0'
 
@@ -83,6 +79,8 @@ def train(chat_file, amount, quotient):
     trn_data = [m_trn_data, w_trn_data]
     tst_data = [m_tst_data, w_tst_data]
 
+    print(f_lbls)
+
     print('Building model...')
     model = build_model((22, len(words[0])),
                         0.1,
@@ -131,8 +129,9 @@ def train(chat_file, amount, quotient):
     name = f'configs/{file_id}.pickle'
     with open(name, 'xb') as file:
         pickle.dump(actives, file, protocol=4)
-    model.save(f'configs/{file_id}.h5')
-    np.save(f"{DICT_FILE}{file_id}.npy", f_msgs)
+    model.save(f'{CONFIG_FOLDER}{file_id}.h5')
+    np.save(f"{CONFIG_FOLDER}{file_id}-msgs.npy", f_msgs)
+    np.save(f"{CONFIG_FOLDER}{file_id}-lbls.npy", f_lbls)
     print(f'Model saved as {file_id}')
 
 
@@ -140,9 +139,9 @@ def train(chat_file, amount, quotient):
 @click.argument('model')
 @click.argument('message')
 def predict(model, message):
-    with open(f'configs/{model}.pickle', 'rb') as file:
+    with open(f'{CONFIG_FOLDER}{model}.pickle', 'rb') as file:
         actives = pickle.load(file)
-    words = np.load(f"{DICT_FILE}{model}.npy")
+    words = np.load(f"{CONFIG_FOLDER}{model}-msgs.npy")
 
     model = load_model(f'configs/{model}.h5')
 
@@ -165,6 +164,12 @@ def predict(model, message):
 
     for name, val in sorted(res_tup, key=lambda x: x[1], reverse=True):
         print(f'{name}: {val}')
+
+
+@cli.command()
+@click.argument('model')
+def fmeasure(model):
+    print(f1(model))
 
 
 if __name__ == '__main__':

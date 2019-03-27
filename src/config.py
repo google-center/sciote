@@ -27,4 +27,4 @@ OUT_DIM = 50
 POOL_SIZE = 2
 
 #
-DICT_FILE = 'configs/'
+CONFIG_FOLDER = 'configs/'
