@@ -15,7 +15,8 @@ def init():
                 accuracy REAL DEFAULT 0,
                 loss REAL DEFAULT 0,
                 epoch INTEGER DEFAULT 0,
-                finished INTEGER DEFAULT 0);""")
+                finished INTEGER DEFAULT 0,
+                avg_f REAL);""")
     cur.execute("""CREATE TABLE messages (
                 author TEXT,
                 text TEXT,
@@ -60,7 +61,7 @@ def training_status(t_id):
 
 
 def save_training_result(t_id, acc, loss):
-    cur.execute("UPDATE trainings SET accuracy=?, loss=? WHERE id=?",
+    cur.execute("UPDATE trainings SET accuracy=?, loss=?, finished=1 WHERE id=?",
                 [acc, loss, t_id])
     conn.commit()
 
