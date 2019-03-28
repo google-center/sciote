@@ -469,7 +469,7 @@ def commas_before_subordination_unions(message):
     # elif points_no == 0:
     #     return 2
     # else:
-    return points_yes / (points_yes+points_no) if (points_yes+points_no) > 0 else 0
+    return points_yes / (points_yes + points_no) if (points_yes + points_no) > 0 else 0
 
 
 def get_metrics(message):
@@ -497,3 +497,15 @@ def get_metrics(message):
          commas_before_subordination_unions(message)],
         np.float32
     )
+
+ # Emoji metric
+ # Возвращает отношение коичества смайликов к количеству символов в сообщении
+import emoji
+def smile_metric(message):
+    count = 0
+    for i in message:
+        if i in emoji.UNICODE_EMOJI:
+            count += 1
+
+    return count / len(message) if len(message) > 0 else 0
+
