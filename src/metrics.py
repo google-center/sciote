@@ -2,6 +2,8 @@ import re
 
 import numpy as np
 
+from config import PRIORITIES, NORMALIZATION_VAL, N_VAL
+
 
 def split_into_words(message):
     """Разделяет сообщение на слова
@@ -469,7 +471,7 @@ def commas_before_subordination_unions(message):
     # elif points_no == 0:
     #     return 2
     # else:
-    return points_yes / (points_yes+points_no) if (points_yes+points_no) > 0 else 0
+    return points_yes / (points_yes + points_no) if (points_yes + points_no) > 0 else 0
 
 
 def get_metrics(message):
@@ -497,3 +499,30 @@ def get_metrics(message):
          commas_before_subordination_unions(message)],
         np.float32
     )
+
+
+def get_weighted_metrics(message):
+    metrics = np.array(
+        [len(message),
+         len(split_into_words(message)),
+         *spacing_around_punctuation(message),
+         avg_ellipsis_length(message),
+         *number_of_dashes(message),
+         all_caps_avg_length(message),
+         *smiley_parenthesis_avg_lengths(message),
+         period_stats(message),
+         capitalized_amount(message),
+         exclamation_amount(message),
+         semicolon_amount(message),
+         elongated_words(message),
+         1 if uses_yo(message) else 0,
+         probable_gender(message),
+         commas_around_introductory_words(message),
+         commas_before_subordination_unions(message)],
+        np.float32
+    )
+
+    for i in range(len(metrics)):
+        metrics[i] = metrics[i] / N_VAL * PRIORITIES[i]
+
+    return metrics
