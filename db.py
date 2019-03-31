@@ -1,6 +1,5 @@
 import sqlite3 as sq
 
-import numpy as np
 from tensorflow.python.keras.callbacks import Callback
 
 conn = sq.connect("sciote.sqlite3")

@@ -1,5 +1,3 @@
-import pickle
-
 import numpy as np
 from tensorflow.python.keras.models import load_model
 
@@ -24,7 +22,6 @@ def f1(model):
 
     # 4 arrays for recall and precision calculations
     relevant = lens  # сообщения принадлежащие конкретному человеку
-    irrelevant = [_len * (people - 1) for _len in lens]  # сообщения не принадлежащие конкретному человеку
     true_positives = np.zeros((people,))  # сообщения конкретного человека выбранные нейронкой
     false_positives = np.zeros((people,))  # сообщения не принадлежащие конкретному человеку выбранные нейронкой
 

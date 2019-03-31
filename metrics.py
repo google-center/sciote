@@ -2,7 +2,7 @@ import re
 
 import numpy as np
 
-from config import PRIORITIES, NORMALIZATION_VAL, N_VAL
+from config import PRIORITIES, N_VAL
 
 
 def split_into_words(message):
@@ -35,7 +35,6 @@ def spacing_around_punctuation(message):
     :param message: сообщение
     :return: массив из четырех элементов
     """
-    result = 0
     punctuation_count = 0
     points = 0
 
@@ -64,7 +63,6 @@ def spacing_around_punctuation(message):
                     points += 1
                     stats[1] += 1
     if punctuation_count != 0:
-        result = (points / punctuation_count) / 3
         stats = [n / punctuation_count for n in stats]
     return stats
 

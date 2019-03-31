@@ -1,10 +1,7 @@
-from random import random
+from tensorflow.python.keras import Input, Model
+from tensorflow.python.keras.layers import Dropout, Dense, Concatenate
 
-from tensorflow.python.keras import Sequential, Input, Model
-from tensorflow.python.keras.layers import Dropout, Dense, Concatenate, Lambda, Embedding, SeparableConv1D, \
-    MaxPooling1D, GlobalAveragePooling1D
-
-from config import KERN_SIZE, BLOCKS, OUT_DIM, POOL_SIZE
+from config import BLOCKS
 
 
 def _last_layer_params(classes_len):
