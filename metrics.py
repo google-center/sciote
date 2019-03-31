@@ -1,5 +1,6 @@
 import re
 
+import emoji
 import numpy as np
 
 
@@ -469,7 +470,19 @@ def commas_before_subordination_unions(message):
     # elif points_no == 0:
     #     return 2
     # else:
-    return points_yes / (points_yes + points_no) if (points_yes + points_no) > 0 else 0
+    return points_yes / (points_yes + points_no) if (
+                                                            points_yes + points_no) > 0 else 0
+
+
+def smile_metric(message):
+    # Emoji metric
+    # Возвращает отношение коичества смайликов к количеству символов в сообщении
+    count = 0
+    for i in message:
+        if i in emoji.UNICODE_EMOJI:
+            count += 1
+
+    return count / len(message) if len(message) > 0 else 0
 
 
 def get_metrics(message):
@@ -494,18 +507,7 @@ def get_metrics(message):
          1 if uses_yo(message) else 0,
          probable_gender(message),
          commas_around_introductory_words(message),
-         commas_before_subordination_unions(message)],
+         commas_before_subordination_unions(message),
+         smile_metric(message)],
         np.float32
     )
-
- # Emoji metric
- # Возвращает отношение коичества смайликов к количеству символов в сообщении
-import emoji
-def smile_metric(message):
-    count = 0
-    for i in message:
-        if i in emoji.UNICODE_EMOJI:
-            count += 1
-
-    return count / len(message) if len(message) > 0 else 0
-

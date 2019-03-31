@@ -1,6 +1,6 @@
 <div align="center">
 
-# ![sciote](docs/sciote-logo-transparent.png)
+# ![sciote](web/static/logo.png)
 
 An AI that can tell your identity based on your text messages
 

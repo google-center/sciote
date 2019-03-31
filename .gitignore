@@ -280,6 +280,7 @@ $RECYCLE.BIN/
 *.h5
 *.pickle
 
-src/configs/
+configs/
 *.sqlite3
-src/data/**/*.html
+data/**/*.html
+.vscode/

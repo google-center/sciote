@@ -24,4 +24,4 @@ OUT_DIM = 50
 POOL_SIZE = 2
 
 #
-CONFIG_DIR = 'src/configs/'
+CONFIG_DIR = 'configs/'

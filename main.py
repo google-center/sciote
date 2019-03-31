@@ -19,7 +19,7 @@ from data.extractor import get_most_active
 from f_measure import f1
 from data.parser_html import parse_html
 from db import get_all_messages, save_training, save_training_result, \
-    UpdateProgressCallback
+    UpdateProgressCallback, save_fmeasure
 from metrics import get_metrics
 
 __version__ = '0.2.0'
@@ -110,7 +110,7 @@ def actual_train(amount, quotient,
     tst_data = [m_tst_data, w_tst_data]
 
     print('Building model...')
-    model = build_model((22, len(words[0])),
+    model = build_model((23, len(words[0])),
                         0.1,
                         1 if amount == 2 else amount,
                         'sigmoid' if amount == 2 else 'softmax')
@@ -198,7 +198,10 @@ def actual_predict(model, message):
 @cli.command()
 @click.argument('model')
 def fmeasure(model):
-    print(f1(model))
+    result = f1(model)
+    print(result)
+    print(result.mean())
+    save_fmeasure(int(model), result.mean())
 
 
 @cli.command()
@@ -268,7 +271,7 @@ def kfold(amount, quotient):
         trn_data = [m_trn_data, w_trn_data]
         tst_data = [m_tst_data, w_tst_data]
 
-        model = build_model((22, len(words[0])),
+        model = build_model((23, len(words[0])),
                             0.1,
                             1 if amount == 2 else amount,
                             'sigmoid' if amount == 2 else 'softmax')

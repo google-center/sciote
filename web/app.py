@@ -1,6 +1,5 @@
 from datetime import datetime
 from multiprocessing import Process
-from threading import Thread
 
 from flask import Flask, render_template, request, abort, json, redirect, \
     url_for

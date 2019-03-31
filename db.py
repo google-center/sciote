@@ -86,6 +86,12 @@ def get_all_trainings():
     return list([(row[0], row[1], row[2], row[3], bool(row[4]))for row in tr])
 
 
+def save_fmeasure(tid, f_value):
+    cur.execute("UPDATE trainings SET avg_f=? WHERE id=?",
+                [f_value, tid])
+    conn.commit()
+
+
 class UpdateProgressCallback(Callback):
     def __init__(self, tid):
         super(UpdateProgressCallback, self).__init__()
