@@ -2,7 +2,6 @@ from keras_preprocessing.sequence import pad_sequences
 from tensorflow.python.keras.preprocessing.text import Tokenizer
 
 from config import DICT_SIZE, LEN_LIMIT, STOP_WORDS
-from data.parser import parse_file
 
 
 def train_and_return_tknzr(texts):
@@ -31,22 +30,34 @@ def tokenize_(data):
     _dict = {}
     for msg in data:
         for word in msg.split(" "):
-            _dict[word] += 1
+            word = word.lower()
+            word = word.strip('0123456789!?.,;:@#$%&*()')
+            if word is not '':
+                if word in _dict.keys():
+                    _dict[word] += 1
+                else:
+                    _dict[word] = 1
 
-    sorted_dict = sorted(_dict.items(), key=lambda kv: kv[1])
-    words, frequency = zip(*sorted_dict)
+    sorted_dict = sorted(_dict.items(), key=lambda kv: -kv[1])
+    words = [word for word, frequency in sorted_dict]
 
     for w in STOP_WORDS:
-        words.remove(w)
+        if w in words:
+            words.remove(w)
+
+    new_data = []
 
     for msg in data:
         new_msg = []
         for word in msg.split(" "):
-            if word in words:
-                new_msg.append(words.index(word))
-            else:
-                new_msg.append(0)
+            word = word.lower()
+            word = word.strip("0123456789!?.,;:@#$%&*()")
+            if word is not '':
+                if word in words:
+                    new_msg.append(words.index(word))
+                else:
+                    new_msg.append(0)
 
-        msg = new_msg
+        new_data.append(new_msg)
 
-    return data
+    return new_data
