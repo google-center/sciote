@@ -29,23 +29,19 @@ def build_model(input_shape, dropout_rate, units, activation):
     inputs = [Input((metrics_num, )), Input((words_num, ))]
 
     metrics_tensor = inputs[0]
-    metrics_tensor = Dropout(rate=dropout_rate)(metrics_tensor)
-    metrics_tensor = Dense(units=50, activation='relu')(metrics_tensor)
-    metrics_tensor = Dropout(rate=dropout_rate)(metrics_tensor)
-    metrics_tensor = Dense(units=50, activation=activation)(metrics_tensor)
+    metrics_tensor = Dense(units=50, activation='sigmoid')(metrics_tensor)
+    metrics_tensor = Dense(units=units, activation='sigmoid')(metrics_tensor)
 
     words_tensor = inputs[1]
-    words_tensor = Dense(100)(words_tensor)
+    words_tensor = Dense(400)(words_tensor)
     for _ in range(BLOCKS):
-        words_tensor = Dropout(rate=dropout_rate)(words_tensor)
+        words_tensor = Dense(words_num * 4)(words_tensor)
         words_tensor = Dense(words_num * 3)(words_tensor)
-        words_tensor = Dense(words_num * 2)(words_tensor)
 
-    words_tensor = Dropout(rate=dropout_rate)(words_tensor)
-    words_tensor = Dense(units=50, activation=activation)(words_tensor)
+    words_tensor = Dense(units=units, activation='sigmoid')(words_tensor)
 
     output_tensor = Concatenate()([words_tensor, metrics_tensor])
-    output_tensor = Dense(units=units, activation=activation)(output_tensor)
+    output_tensor = Dense(units=units, activation='sigmoid')(output_tensor)
 
     model = Model(inputs=inputs, outputs=[output_tensor])
 
