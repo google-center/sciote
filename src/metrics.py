@@ -2,7 +2,7 @@ import re
 
 import numpy as np
 
-from config import PRIORITIES, NORMALIZATION_VAL, N_VAL
+from config import PRIORITIES, N_VAL
 
 
 def split_into_words(message):
