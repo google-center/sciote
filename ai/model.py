@@ -1,10 +1,7 @@
-from random import random
+from tensorflow.python.keras import Input, Model
+from tensorflow.python.keras.layers import Dropout, Dense, Concatenate
 
-from tensorflow.python.keras import Sequential, Input, Model
-from tensorflow.python.keras.layers import Dropout, Dense, Concatenate, Lambda, Embedding, SeparableConv1D, \
-    MaxPooling1D, GlobalAveragePooling1D
-
-from config import KERN_SIZE, BLOCKS, OUT_DIM, POOL_SIZE
+from config import BLOCKS
 
 
 def _last_layer_params(classes_len):
@@ -35,16 +32,19 @@ def build_model(input_shape, dropout_rate, units, activation):
     metrics_tensor = Dense(units=50, activation=activation)(metrics_tensor)
 
     words_tensor = inputs[1]
-    words_tensor = Dense(100)(words_tensor)
+    words_tensor = Dense(50)(words_tensor)
     for _ in range(BLOCKS):
         words_tensor = Dropout(rate=dropout_rate)(words_tensor)
-        words_tensor = Dense(words_num * 3)(words_tensor)
-        words_tensor = Dense(words_num * 2)(words_tensor)
+        words_tensor = Dense(300)(words_tensor)
+        words_tensor = Dense(200)(words_tensor)
 
     words_tensor = Dropout(rate=dropout_rate)(words_tensor)
     words_tensor = Dense(units=50, activation=activation)(words_tensor)
 
     output_tensor = Concatenate()([words_tensor, metrics_tensor])
+    output_tensor = Dropout(rate=dropout_rate)(output_tensor)
+    output_tensor = Dense(units=25, activation='relu')(output_tensor)
+    output_tensor = Dropout(rate=dropout_rate)(output_tensor)
     output_tensor = Dense(units=units, activation=activation)(output_tensor)
 
     model = Model(inputs=inputs, outputs=[output_tensor])

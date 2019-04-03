@@ -1,6 +1,5 @@
 import sqlite3 as sq
 
-import numpy as np
 from tensorflow.python.keras.callbacks import Callback
 
 conn = sq.connect("sciote.sqlite3")
@@ -15,7 +14,8 @@ def init():
                 accuracy REAL DEFAULT 0,
                 loss REAL DEFAULT 0,
                 epoch INTEGER DEFAULT 0,
-                finished INTEGER DEFAULT 0);""")
+                finished INTEGER DEFAULT 0,
+                avg_f REAL);""")
     cur.execute("""CREATE TABLE messages (
                 author TEXT,
                 text TEXT,
@@ -60,7 +60,7 @@ def training_status(t_id):
 
 
 def save_training_result(t_id, acc, loss):
-    cur.execute("UPDATE trainings SET accuracy=?, loss=? WHERE id=?",
+    cur.execute("UPDATE trainings SET accuracy=?, loss=?, finished=1 WHERE id=?",
                 [acc, loss, t_id])
     conn.commit()
 
@@ -83,6 +83,12 @@ def get_all_trainings():
     tr = cur.fetchall()
     conn.commit()
     return list([(row[0], row[1], row[2], row[3], bool(row[4]))for row in tr])
+
+
+def save_fmeasure(tid, f_value):
+    cur.execute("UPDATE trainings SET avg_f=? WHERE id=?",
+                [f_value, tid])
+    conn.commit()
 
 
 class UpdateProgressCallback(Callback):

@@ -35,8 +35,7 @@ def build_model(input_shape, dropout_rate, units, activation):
     words_tensor = inputs[1]
     words_tensor = Dense(400)(words_tensor)
     for _ in range(BLOCKS):
-        words_tensor = Dense(words_num * 4)(words_tensor)
-        words_tensor = Dense(words_num * 3)(words_tensor)
+        words_tensor = Dense(500)(words_tensor)
 
     words_tensor = Dense(units=units, activation='sigmoid')(words_tensor)
 
