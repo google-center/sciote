@@ -110,7 +110,7 @@ def actual_train(amount, quotient,
     tst_data = [m_tst_data, w_tst_data]
 
     print('Building model...')
-    model = build_model((23, len(words[0])),
+    model = build_model((22, len(words[0])),
                         0.1,
                         1 if amount == 2 else amount,
                         'sigmoid' if amount == 2 else 'softmax')
@@ -271,7 +271,7 @@ def kfold(amount, quotient):
         trn_data = [m_trn_data, w_trn_data]
         tst_data = [m_tst_data, w_tst_data]
 
-        model = build_model((23, len(words[0])),
+        model = build_model((22, len(words[0])),
                             0.1,
                             1 if amount == 2 else amount,
                             'sigmoid' if amount == 2 else 'softmax')

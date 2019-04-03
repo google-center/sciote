@@ -13,6 +13,11 @@ threads = {}
 
 
 @app.route('/', methods=['GET'])
+def new_index():
+    return render_template('new_index.html')
+
+
+@app.route('/index', methods=['GET'])
 def index():
     return render_template('index.html', models=get_all_trainings())
 
