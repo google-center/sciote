@@ -132,7 +132,7 @@ def actual_train(amount, quotient,
     fit = model.fit(
         trn_data,
         trn_lbls,
-        epochs=1,
+        epochs=100,
         callbacks=cbs,
         validation_data=(tst_data, tst_lbls),
         verbose=2,
