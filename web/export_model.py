@@ -2,8 +2,8 @@ from tensorflow.python.keras.backend import get_session
 from tensorflow.python.keras.models import load_model
 from tensorflow.python.saved_model.simple_save import simple_save
 
-model = load_model('../configs/1554207578/model.h5')
-export_path = './models/'
+model = load_model('../configs/1554370971/model.h5')
+export_path = './models/2'
 
 with get_session() as sess:
     simple_save(

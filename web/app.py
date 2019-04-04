@@ -6,16 +6,20 @@ from flask import Flask, render_template, request, json
 
 from config import CONFIG_DIR
 from metrics import get_metrics
-from tokenizer import tokenize
+from tokenizer import tokenize, tokenize_
 
 app = Flask(__name__)
 
-model_id = 1554207578
+model_id = 1554370971
 
 with open(f'{CONFIG_DIR}{model_id}/actives.pickle', 'rb') as file:
     actives = pickle.load(file)
 
-MSGS = np.load(f"{CONFIG_DIR}{model_id}/msgs.npy")
+with open(f'{CONFIG_DIR}{model_id}/tokenizer.pickle', 'rb') as file:
+    tokenizer = pickle.load(file)
+
+with open(f'{CONFIG_DIR}{model_id}/max_len.pickle', 'rb') as file:
+    max_len = pickle.load(file)
 
 
 @app.route('/', methods=['GET'])
@@ -29,11 +33,7 @@ def predict():
 
     metrics = np.array([get_metrics(message)])
 
-    words = np.append(MSGS, message)
-    words = tokenize(words)
-
-    tokenized = [words[len(words) - 1]]
-    tokenized = np.array(tokenized)
+    tokenized, _, _ = tokenize_([message], tokenizer, max_len)
 
     payload = {
         "instances": [{'input': [metrics, tokenized]}]
