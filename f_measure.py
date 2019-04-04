@@ -1,7 +1,7 @@
 import numpy as np
 from tensorflow.python.keras.models import load_model
 
-from ai.tokenizer import tokenize
+from ai.tokenizer import tokenize, tokenize_
 from config import CONFIG_DIR
 from metrics import get_metrics
 
@@ -11,7 +11,7 @@ def f1(model):
     lbls = np.load(f"{CONFIG_DIR}{model}/lbls.npy")
 
     metrics = np.array([get_metrics(msg) for msg in msgs])
-    tokenized = np.array(tokenize(msgs))
+    tokenized, _, _ = tokenize_(msgs)
 
     model = load_model(f'{CONFIG_DIR}{model}/model.h5')
 

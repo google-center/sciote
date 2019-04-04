@@ -1,50 +1,77 @@
-{% extends 'wrap.html' %}
-
-{% block title %}
-    Main page
-{% endblock %}
-
-{% block content %}
-    <div class="container">
-        <a href="/">
-            <img class="logo" src="/static/logo.png" alt="Sciote logo">
-        </a>
-        <h1 class="title">
-            Models
-        </h1>
-        <section>
-            <table>
-                <thead>
-                <tr>
-                    <th>Model ID</th>
-                    <th>People</th>
-                    <th>Quotient</th>
-                    <th>Accuracy</th>
-                    <th></th>
-                </tr>
-                </thead>
-                {% for model in models %}
-                    <tr {% if not model[4] %}style="color:blueviolet"{% endif %}>
-                        <td>{{ model[0] }}</td>
-                        <td>{{ model[1] }}</td>
-                        <td>{{ model[2] }}</td>
-                        <td>
-                            {{ "%0.2f"|format(model[3]*100 if model[3] else 0)}}
-                        </td>
-                        <td>
-                            {% if model[4] %}
-                                <a href="{{ url_for('predict', tid=model[0]) }}">Predict</a>
-                            {% else %}
-                                <a href="{{ url_for('train_status_page', tid=model[0]) }}">Status</a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-            </table>
-            <form action="{{ url_for('train') }}"
-                  method="get">
-                <input type="submit" value="Train more!">
-            </form>
-        </section>
+<html lang="en">
+<head>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,700"
+          rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <meta charset="utf-8">
+    <title>sciote</title>
+</head>
+<body>
+<div class="container">
+    <form>
+        <textarea name="text_area" id="message"></textarea><br>
+        <input type="button" id="send-button" onclick="sendPredict()"
+               value="predict">
+    </form>
+    <div class="results">
+        <div class="percents" id="percents">
+        </div>
+        <div class="names" id="names">
+        </div>
     </div>
-{% endblock %}
+    <div class="footer">
+        <img src="/static/logo.png" class="logo">
+    </div>
+</div>
+<script type="text/javascript">
+    //получаем текстовое поле
+    let message = document.getElementById("message");
+    //получаем блок, куда будем выводить результат
+    let results = document.getElementById("results");
+    //получаем кнопку predict
+    let sendButton = document.getElementById("send-button");
+    //получаем блок с процентами
+    let percents = document.getElementById("percents");
+    //получаем блок с именами
+    let names = document.getElementById("names");
+
+    //основная функция
+    function sendPredict() {
+        let data = new FormData();
+        //получаем данные из формы
+        data.append("msg", message.value);
+        let xhr = new XMLHttpRequest();
+        xhr.withCredentials = true;
+        xhr.addEventListener("readystatechange", function () {
+            if (this.readyState === this.DONE) {
+                let resp = JSON.parse(this.responseText);
+                //сортируем элементы по убыванию
+                let sortedKeys = Object.keys(resp).sort(function (a, b) {
+                    return resp[b] - resp[a]
+                });
+                // let str = "";
+                for (const key of sortedKeys) {
+                    let divPercent = document.createElement('div');
+                    let divName = document.createElement('div');
+                    divPercent.className = 'percents_node';
+                    divName.className = 'names_node';
+                    divPercent.innerHTML = key;
+                    divName.innerHTML = ((resp[key] * 100).toFixed(2)).toString() + '%';
+                    percents.appendChild(divPercent);
+                    names.appendChild(divName);
+                    // str += "<strong>"+key+": </strong>" + ((resp[key]*100).toFixed(2)).toString() + "% <br>";
+                }
+                // results.innerHTML = str;
+                sendButton.value = "predict";
+                sendButton.disabled = false;
+            }
+        });
+        xhr.open("POST", "/predict");
+        xhr.send(data);
+        sendButton.value = "predicting...";
+        sendButton.disabled = true;
+    }
+
+</script>
+</body>
+</html>

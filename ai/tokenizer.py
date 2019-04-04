@@ -23,27 +23,45 @@ def tokenize(trn_data):
 
     x_trn = pad_sequences(x_trn, maxlen=max_len)
 
-    return x_trn
+    return x_trn, x_tknzr
 
 
-def tokenize_(data):
-    _dict = {}
+def tokenize_with_existing(data, tknzr):
+    data = tknzr.texts_to_sequences(data)
+
+    max_len = len(max(data, key=len))
+    if max_len > LEN_LIMIT:
+        max_len = LEN_LIMIT
+
+    data = pad_sequences(data, maxlen=max_len)
+    return data
+
+
+def create_tknzr(data):
+    words = {}
     for msg in data:
         for word in msg.split(" "):
             word = word.lower()
             word = word.strip('0123456789!?.,;:@#$%&*()')
             if word is not '':
-                if word in _dict.keys():
-                    _dict[word] += 1
+                if word in words.keys():
+                    words[word] += 1
                 else:
-                    _dict[word] = 1
+                    words[word] = 1
 
-    sorted_dict = sorted(_dict.items(), key=lambda kv: -kv[1])
-    words = [word for word, frequency in sorted_dict]
+    words = sorted(words.items(), key=lambda kv: -kv[1])
+    words = [word for word, frequency in words]
 
     for w in STOP_WORDS:
         if w in words:
             words.remove(w)
+
+    return words
+
+
+def tokenize_(data, words=None, max_len=None):
+    if not words:
+        words = create_tknzr(data)
 
     new_data = []
 
@@ -60,4 +78,11 @@ def tokenize_(data):
 
         new_data.append(new_msg)
 
-    return new_data
+    if not max_len:
+        max_len = len(max(new_data, key=len))
+        if max_len > LEN_LIMIT:
+            max_len = LEN_LIMIT
+
+    new_data = pad_sequences(new_data, maxlen=max_len)
+
+    return new_data, words, max_len

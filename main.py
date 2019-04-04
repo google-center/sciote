@@ -13,7 +13,7 @@ from tensorflow.python.keras.models import load_model
 from tensorflow.python.keras.optimizers import Adam
 
 from ai.model import build_model
-from ai.tokenizer import tokenize
+from ai.tokenizer import tokenize, tokenize_, tokenize_with_existing
 from config import QUOTIENT, CONFIG_DIR
 from data.extractor import get_most_active
 from f_measure import f1
@@ -90,7 +90,7 @@ def actual_train(amount, quotient,
 
     print('Tokenizing data...')
     metrics = [get_metrics(msg) for msg in f_msgs]
-    words = tokenize(f_msgs)
+    words, tokenizer, max_len = tokenize_(f_msgs)
     metrics = np.array(metrics)
     words = np.array(words)
 
@@ -110,7 +110,7 @@ def actual_train(amount, quotient,
     tst_data = [m_tst_data, w_tst_data]
 
     print('Building model...')
-    model = build_model((22, len(words[0])),
+    model = build_model((trn_data[0].shape[1], len(words[0])),
                         0.1,
                         1 if amount == 2 else amount,
                         'sigmoid' if amount == 2 else 'softmax')
@@ -132,7 +132,7 @@ def actual_train(amount, quotient,
     fit = model.fit(
         trn_data,
         trn_lbls,
-        epochs=100,
+        epochs=1,
         callbacks=cbs,
         validation_data=(tst_data, tst_lbls),
         verbose=2,
@@ -152,6 +152,12 @@ def actual_train(amount, quotient,
     with open(name, 'xb') as file:
         pickle.dump(actives, file, protocol=4)
 
+    with open(f'{CONFIG_DIR}{file_id}/tokenizer.pickle', 'xb') as file:
+        pickle.dump(tokenizer, file, protocol=4)
+
+    with open(f'{CONFIG_DIR}{file_id}/max_len.pickle', 'xb') as file:
+        pickle.dump(max_len, file, protocol=4)
+
     model.save(f'{CONFIG_DIR}{file_id}/model.h5')
     np.save(f"{CONFIG_DIR}{file_id}/msgs.npy", f_msgs)
     np.save(f"{CONFIG_DIR}{file_id}/lbls.npy", f_lbls)
@@ -169,16 +175,23 @@ def actual_predict(model, message):
     with open(f'{CONFIG_DIR}{model}/actives.pickle', 'rb') as file:
         actives = pickle.load(file)
 
-    words = np.load(f"{CONFIG_DIR}{model}/msgs.npy")
+    with open(f'{CONFIG_DIR}{model}/tokenizer.pickle', 'rb') as file:
+        tokenizer = pickle.load(file)
+
+    with open(f'{CONFIG_DIR}{model}/max_len.pickle', 'rb') as file:
+        max_len = pickle.load(file)
+
     model = load_model(f'{CONFIG_DIR}{model}/model.h5')
 
     metrics = np.array([get_metrics(message)])
 
-    words = np.append(words, message)
-    words = tokenize(words)
+    # words = np.append(words, message)
+    # words = tokenize(words)
 
-    tokenized = [words[len(words) - 1]]
-    tokenized = np.array(tokenized)
+    tokenized, _, _ = tokenize_([message], tokenizer, max_len)
+
+    # tokenized = [words[-1]]
+    # tokenized = np.array(tokenized)
     result = model.predict([metrics, tokenized],
                            batch_size=1)
     print()

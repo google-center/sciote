@@ -284,3 +284,4 @@ configs/
 *.sqlite3
 data/**/*.html
 .vscode/
+web/models
