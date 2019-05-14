@@ -47,6 +47,10 @@ body {
     cursor: pointer;
 }
 
+#send-button:disabled {
+    opacity: 0.5;
+}
+
 .results {
     display: flex;
     flex-direction: row;

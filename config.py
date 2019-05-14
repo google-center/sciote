@@ -12,7 +12,7 @@ DICT_SIZE = 20000
 LEN_LIMIT = 700
 
 # количество пар блоков sepCNN и блоков пула
-BLOCKS = 5
+BLOCKS = 2
 
 # размер конволюционного окна
 KERN_SIZE = 4

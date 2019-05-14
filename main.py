@@ -12,7 +12,7 @@ from tensorflow.python.keras.callbacks import EarlyStopping
 from tensorflow.python.keras.models import load_model
 from tensorflow.python.keras.optimizers import Adam
 
-from ai.model import build_model
+from ai.model2 import build_model
 from ai.tokenizer import tokenize, tokenize_, tokenize_with_existing
 from config import QUOTIENT, CONFIG_DIR
 from data.extractor import get_most_active

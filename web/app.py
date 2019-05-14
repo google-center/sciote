@@ -3,10 +3,11 @@ import pickle
 import numpy as np
 import requests
 from flask import Flask, render_template, request, json
+from tensorflow.python.keras.models import load_model
 
 from config import CONFIG_DIR
 from metrics import get_metrics
-from tokenizer import tokenize, tokenize_
+from ai.tokenizer import tokenize, tokenize_
 
 app = Flask(__name__)
 
@@ -35,17 +36,22 @@ def predict():
 
     tokenized, _, _ = tokenize_([message], tokenizer, max_len)
 
-    payload = {
-        "instances": [{'input': [metrics, tokenized]}]
-    }
+    model = load_model(f'{CONFIG_DIR}{model_id}/model.h5')
 
-    r = requests.post('http://localhost:9000/v1/models/Classifier:predict',
-                      json=payload)
-    results = json.loads(r.content.decode('utf-8'))
+    result = model.predict([metrics, tokenized],
+                           batch_size=1)
+
+    res_tup = []
+
+    for i in range(len(result[0])):
+        res_tup.append((actives[i], result[0][i]))
 
     res_dict = {}
-
-    for person, prob in results:
+    for person, prob in res_tup:
         res_dict[person] = float(prob)
 
     return json.jsonify(res_dict)
+
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=80)
