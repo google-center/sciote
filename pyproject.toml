@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "sciote"
+version = "2.0.0"
+description = "The AI that uncovers people's identities based on their text messages"
+license = "MIT"
+authors = [
+	"Nikita Karamov <nick@karamoff.dev>"
+]
+readme = "README.md"
+homepage = "https://github.com/gugl-center/sciote"
+repository = "https://github.com/gugl-center/sciote"
+classifiers = [
+	"Development Status :: 3 - Alpha",
+	"Environment :: Console",
+	"License :: OSI Approved :: MIT License",
+	"Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
