@@ -1,21 +1,17 @@
 <div align="center">
 
-# ![sciote](web/static/logo.png)
+# ![sciote](https://raw.githubusercontent.com/gugl-center/sciote/97ff9e21a26bde9dcd476b79412c6d9612c3742f/web/static/logo.png)
 
-An AI that can tell your identity based on your text messages
-
-[![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/gugl-center/sciote.svg)](https://codeclimate.com/github/gugl-center/sciote)
-[![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/gugl-center/sciote.svg)](https://libraries.io/github/gugl-center/sciote)
-[![GitHub](https://img.shields.io/github/license/gugl-center/sciote.svg)](https://github.com/gugl-center/sciote/blob/master/LICENSE)
+The AI that uncovers people's identities based on their text messages
 
 </div>
 
 ## Installation
 
-1. Make sure you have `virtualenv` installed
+1. Install [poetry](https://python-poetry.org/)
 2. Clone the repo
-3. Create a virtualenv
-4. Install requirements from `requirements.txt` file
+3. `poetry install`
+4. `poetry run main.py`
 
 For a detailed guide head over to the [wiki](https://github.com/gugl-center/sciote/wiki)
 
